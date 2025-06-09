@@ -38,7 +38,6 @@ export function LocationAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
 
-  // Debounced autocomplete - only fetch if user hasn't already selected
   useEffect(() => {
     if (hasSelected) return
 
@@ -50,7 +49,6 @@ export function LocationAutocomplete({
           const data = await response.json()
 
           if (data.predictions) {
-            // Limit to top 4 suggestions instead of 5
             setSuggestions(data.predictions.slice(0, 4))
             setShowSuggestions(true)
           }
@@ -108,7 +106,6 @@ export function LocationAutocomplete({
     const newValue = e.target.value
     onChange(newValue)
 
-    // Reset selection state when user types
     if (hasSelected && newValue !== value) {
       setHasSelected(false)
     }
@@ -124,7 +121,6 @@ export function LocationAutocomplete({
           const { latitude, longitude } = position.coords
 
           try {
-            // Reverse geocode to get address from coordinates
             const response = await fetch(`/api/reverse-geocode?lat=${latitude}&lng=${longitude}`)
 
             if (!response.ok) {
@@ -139,7 +135,6 @@ export function LocationAutocomplete({
               onChange(address)
               onSelect(address)
             } else {
-              // Fallback to coordinates if no address found
               const locationString = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
               setHasSelected(true)
               onChange(locationString)
@@ -147,7 +142,6 @@ export function LocationAutocomplete({
             }
           } catch (error) {
             console.error("Error reverse geocoding:", error)
-            // Fallback to coordinates
             const locationString = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
             setHasSelected(true)
             onChange(locationString)
@@ -182,7 +176,6 @@ export function LocationAutocomplete({
     }
   }
 
-  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -233,7 +226,6 @@ export function LocationAutocomplete({
         )}
       </div>
 
-      {/* Suggestions Dropdown */}
       <AnimatePresence>
         {showSuggestions && suggestions.length > 0 && !hasSelected && (
           <motion.div
@@ -262,10 +254,9 @@ export function LocationAutocomplete({
         )}
       </AnimatePresence>
 
-      {/* Current Location Button */}
       <div className="flex items-center space-x-4 mt-4">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
-        <span className="text-blue-300 text-sm font-medium px-4 py-2 bg-slate-800/50 rounded-full">OR</span>
+        <span className="text-blue-300 text-sm font-medium px-4 py-4 bg-slate-800/50 rounded-full">OR</span>
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
       </div>
 
@@ -273,7 +264,7 @@ export function LocationAutocomplete({
         onClick={getCurrentLocation}
         variant="outline"
         disabled={isGettingLocation}
-        className="w-full border-blue-600 text-blue-300 hover:bg-blue-900/30 h-14 text-lg rounded-xl mt-4"
+        className="w-full mt-8 border-blue-600 text-blue-300 hover:bg-blue-900/30 h-14 text-lg rounded-xl"
       >
         {isGettingLocation ? (
           <>

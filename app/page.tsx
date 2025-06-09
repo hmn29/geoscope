@@ -1,476 +1,225 @@
 "use client"
 
-import React, {
-  useState,
-  useEffect,
-  memo,
-  useMemo,
-  type FC,
-} from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import {
-  Zap,
-  TrendingUp,
-  Shield,
-  BarChart3,
-  Globe,
-  ArrowRight,
-} from "lucide-react"
+import { ArrowRight, Zap, TrendingUp, Shield } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import {
+  GoogleMap,
+  Marker,
+  useJsApiLoader,
+  Circle,
+} from "@react-google-maps/api"
+
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { BusinessTypeSelector } from "@/components/business-type-selector"
-import { ThreeDVisualization } from "@/components/3d-visualization"
-import { ThreeDReportPreview } from "@/components/3d-report-preview"
+import { Button } from "@/components/ui/button"
 
-/* ------------------------------------------------------------------ */
-/*  Memoised Earth-background                                         */
-/* ------------------------------------------------------------------ */
 
-interface EarthBackgroundProps {
-  windowSize: { width: number; height: number }
-  animationActive: boolean
-}
+const CLEAN_DARK: google.maps.MapTypeStyle[] = [
+  { elementType: "geometry", stylers: [{ color: "#0b0f19" }] },
+  { elementType: "labels", stylers: [{ visibility: "off" }] },
+  {
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ visibility: "on" }, { color: "#54627a" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#0e243d" }],
+  },
+]
 
-const EarthBackground: FC<EarthBackgroundProps> = memo(
-  ({ windowSize, animationActive }) => {
-    const orbs = useMemo(
-      () =>
-        Array.from({ length: 5 }).map(() => ({
-          x: Math.random() * windowSize.width,
-          y: Math.random() * windowSize.height,
-          delay: Math.random() * 10,
-        })),
-      []
-    )
-
-    const particles = useMemo(
-      () =>
-        Array.from({ length: 30 }).map(() => ({
-          x: Math.random() * windowSize.width,
-          y: Math.random() * windowSize.height,
-          delay: Math.random() * 0.3,
-        })),
-      []
-    )
-
-    return (
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Earth */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{
-            opacity: animationActive ? 0.15 : 0,
-            scale: animationActive ? 1 : 0.8,
-            rotate: animationActive ? 360 : 0,
-          }}
-          transition={{
-            opacity: { duration: 2 },
-            scale: { duration: 3 },
-            rotate: { duration: 200, repeat: Infinity, ease: "linear" },
-          }}
-          className="absolute top-1/2 left-1/2 w-[900px] h-[900px] -translate-x-1/2 -translate-y-1/2"
-        >
-          <ThreeDVisualization type="hero" className="w-full h-full" />
-        </motion.div>
-
-        {/* Orbs */}
-        {orbs.map((orb, i) => (
-          <motion.div
-            key={`orb-${i}`}
-            className={`absolute w-32 h-32 rounded-full ${
-              i % 2 === 0
-                ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/5"
-                : "bg-gradient-to-r from-purple-500/10 to-pink-500/5"
-            }`}
-            initial={{ x: orb.x, y: orb.y, scale: 0 }}
-            animate={{
-              scale: animationActive ? [0, 1, 0.5, 1, 0] : 0,
-            }}
-            transition={{
-              duration: 20 + orb.delay,
-              repeat: Infinity,
-              times: [0, 0.2, 0.5, 0.8, 1],
-              delay: i * 2,
-            }}
-          />
-        ))}
-
-        {/* Particles */}
-        {particles.map((p, i) => (
-          <motion.div
-            key={`particle-${i}`}
-            className={`absolute w-1 h-1 rounded-full ${
-              i % 3 === 0
-                ? "bg-blue-400"
-                : i % 3 === 1
-                ? "bg-cyan-400"
-                : "bg-purple-400"
-            }`}
-            initial={{ x: p.x, y: p.y, opacity: 0, scale: 0 }}
-            animate={{
-              opacity: animationActive ? [0, 0.7, 0] : 0,
-              scale: animationActive ? [0, 1, 0] : 0,
-            }}
-            transition={{
-              duration: 8 + Math.random() * 12,
-              times: [0, 0.5, 1],
-              repeat: Infinity,
-              delay: p.delay,
-            }}
-          >
-            <motion.div
-              className={`absolute top-0 left-0 w-6 h-1 -z-10 ${
-                i % 3 === 0
-                  ? "bg-blue-400/20"
-                  : i % 3 === 1
-                  ? "bg-cyan-400/20"
-                  : "bg-purple-400/20"
-              } blur-sm`}
-              initial={{ width: 0 }}
-              animate={{ width: animationActive ? [0, 6, 0] : 0 }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-              }}
-            />
-          </motion.div>
-        ))}
-
-        {/* Rings */}
-        {Array.from({ length: 3 }).map((_, i) => (
-          <motion.div
-            key={`ring-${i}`}
-            className="absolute top-1/2 left-1/2 rounded-full border-2 border-blue-500/10"
-            initial={{
-              width: 100,
-              height: 100,
-              x: -50,
-              y: -50,
-              opacity: 0,
-            }}
-            animate={{
-              width: animationActive ? [100, 600] : 100,
-              height: animationActive ? [100, 600] : 100,
-              x: animationActive ? [-50, -300] : -50,
-              y: animationActive ? [-50, -300] : -50,
-              opacity: animationActive ? [0.5, 0] : 0,
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              delay: i * 1.5,
-            }}
-          />
-        ))}
-      </div>
-    )
-  }
-)
-EarthBackground.displayName = "EarthBackground"
-
-/* ------------------------------------------------------------------ */
-/*  Main page                                                          */
-/* ------------------------------------------------------------------ */
+const NYC = { lat: 40.712776, lng: -74.005974 } 
 
 export default function HomePage() {
   const router = useRouter()
 
+
   const [location, setLocation] = useState("")
-  const [showGenerate, setShowGenerate] = useState(false)
-  const [showBusinessSelector, setShowBusinessSelector] = useState(false)
-  const [animationActive, setAnimationActive] = useState(false)
-  const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 })
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    null,
+  )
+  const [showBiz, setShowBiz] = useState(false)
 
-  useEffect(() => {
-    const timer = setTimeout(() => setAnimationActive(true), 500)
-    if (typeof window !== "undefined") {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
-      const resize = () =>
-        setWindowSize({
-          width: window.innerWidth,
-          height: window.innerHeight,
-        })
-      window.addEventListener("resize", resize)
-      return () => {
-        clearTimeout(timer)
-        window.removeEventListener("resize", resize)
-      }
-    }
-  }, [])
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: "AIzaSyAoEItHnh7E9es3rgAXxrHILFtJspawPRI",
+    libraries: ["places"],
+  })
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("selectedLocation")
-      localStorage.removeItem("analysisTimestamp")
-      localStorage.removeItem("businessType")
-      localStorage.removeItem("businessCategory")
-    }
-  }, [])
-
-  const handleLocationSelect = (sel: string) => {
-    setLocation(sel)
-    setShowGenerate(!!sel.trim())
+  const handleSelect = (
+    addr: string,
+    geo?: { lat: number; lng: number },
+  ) => {
+    setLocation(addr)
+    if (geo) setCoords(geo)
   }
 
-  const features = [
-    {
-      icon: TrendingUp,
-      title: "Traffic Analysis",
-      description: "Live foot traffic patterns and pedestrian density analysis",
-      visualType: "traffic",
-    },
-    {
-      icon: Shield,
-      title: "Safety Metrics",
-      description: "Comprehensive safety scores for your business location",
-      visualType: "safety",
-    },
-    {
-      icon: BarChart3,
-      title: "Detailed Reports",
-      description: "Interactive analysis reports with actionable insights",
-      visualType: "report", // stays as report preview
-    },
-  ]
-
-  const generateScore = () => setShowBusinessSelector(true)
-
-  const handleBusinessTypeSelect = (type: string, cat: string) => {
-    localStorage.setItem("businessType", type)
-    localStorage.setItem("businessCategory", cat)
+  const openBizModal = () => location.trim() && setShowBiz(true)
+  const handleBizChoose = (t: string, c: string) => {
     localStorage.setItem("selectedLocation", location)
-    localStorage.setItem("analysisTimestamp", Date.now().toString())
+    if (coords) {
+      localStorage.setItem("lat", String(coords.lat))
+      localStorage.setItem("lng", String(coords.lng))
+    }
+    localStorage.setItem("businessType", t)
+    localStorage.setItem("businessCategory", c)
     router.push("/analysis")
   }
 
+  useEffect(() => localStorage.clear(), [])
+
+  const canGenerate = Boolean(location.trim())
+
   return (
-    <div className="relative min-h-screen bg-slate-900">
-      <EarthBackground
-        windowSize={windowSize}
-        animationActive={animationActive}
-      />
+    <div className="relative h-screen w-screen overflow-hidden bg-black text-white">
+      {isLoaded && (
+        <GoogleMap
+          mapContainerStyle={{ height: "100%", width: "100%" }}
+          center={coords ?? NYC}
+          zoom={14}
+          options={{
+            disableDefaultUI: true,
+            styles: CLEAN_DARK,
+            gestureHandling: "none",
+          }}
+        >
+          <Marker position={coords ?? NYC} />
+          <Circle
+            center={coords ?? NYC}
+            radius={200}
+            options={{
+              strokeOpacity: 0,
+              fillColor: "#00ffff",
+              fillOpacity: 0.15,
+            }}
+          />
+        </GoogleMap>
+      )}
 
-      <BusinessTypeSelector
-        isOpen={showBusinessSelector}
-        onClose={() => setShowBusinessSelector(false)}
-        onSelect={handleBusinessTypeSelect}
-      />
-
-      {/* header */}
-      <header className="relative z-10 px-8 py-6">
-        <div className="flex items-center">
-          <div className="h-16 w-16 overflow-hidden rounded-full border-4 border-blue-500 shadow-lg shadow-blue-500/30">
+      <div className="absolute inset-0 flex flex-col md:flex-row bg-slate-900/60 backdrop-blur-sm">
+        <div className="flex flex-1 flex-col px-6 pt-10 md:px-14 md:pt-16">
+          <div className="mb-10 flex items-center space-x-3">
             <Image
               src="/logo.png"
-              alt="GeoScope Credit Logo"
-              width={64}
-              height={64}
-              className="object-cover"
+              alt="GeoScope"
+              width={50}
+              height={50}
+              className="rounded-full border-2 border-cyan-500"
+            />
+            <h1 className="text-xl font-semibold">GeoScope</h1>
+          </div>
+
+          <h2 className="mb-6 text-3xl font-bold md:text-4xl">
+            Find your <br />
+            <span className="text-cyan-400">shop location</span>
+          </h2>
+
+          <div className="relative z-20">
+            <LocationAutocomplete
+              value={location}
+              onChange={setLocation}
+              onSelect={handleSelect}
+              placeholder="Turn your shop’s location into a loan-worthy score"
+              className="w-full"
             />
           </div>
-          <div className="ml-4">
-            <h1 className="text-3xl font-bold text-white">GeoScope Credit</h1>
-            <p className="text-blue-300">Location Intelligence Platform</p>
-          </div>
-        </div>
-      </header>
 
-      {/* main */}
-      <div className="relative z-10 mx-auto max-w-7xl px-8 py-12">
-        {/* hero */}
-        <div className="mb-16 flex flex-col items-center justify-between gap-12 md:flex-row">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="md:w-1/2"
-          >
-            <h2 className="mb-6 text-4xl font-bold leading-tight text-white md:text-5xl">
-              Find Your Perfect
-              <span className="block bg-gradient-to-r from-cyan-400 to-yellow-400 bg-clip-text text-transparent">
-                Business Location
-              </span>
-            </h2>
-            <p className="mb-8 text-lg text-blue-200">
-              Comprehensive location intelligence that analyzes foot traffic,
-              safety, competition, and accessibility to give you the perfect
-              business location score.
-            </p>
-            <div className="mb-8 flex space-x-6">
-              <div className="flex items-center space-x-2 rounded-full border border-blue-700/30 bg-slate-800/50 px-6 py-3">
-                <div className="h-3 w-3 animate-pulse rounded-full bg-green-400"></div>
-                <span className="font-medium text-green-400">Live Data</span>
-              </div>
-              <div className="flex items-center space-x-2 rounded-full border border-blue-700/30 bg-slate-800/50 px-6 py-3">
-                <Globe className="h-5 w-5 text-purple-400" />
-                <span className="font-medium text-purple-400">
-                  Global Coverage
-                </span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Earth animation inside hero */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-            className="h-[500px] md:h-[500px] md:w-2/3 lg:w-1/2"
-          >
-              <ThreeDReportPreview className="h-full w-full" />
-          </motion.div>
-        </div>
-
-        {/* location form */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-          className="mx-auto mb-20 max-w-2xl"
-        >
-          <Card className="backdrop-blur-xl bg-slate-800/50 border-cyan-500/30 shadow-2xl">
-            <CardContent className="p-8">
-              <div className="mb-6 flex items-center space-x-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-yellow-500">
-                  <Zap className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white">
-                    Start Your Analysis
-                  </h3>
-                  <p className="text-cyan-300">Enter any address worldwide</p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <LocationAutocomplete
-                  value={location}
-                  onChange={setLocation}
-                  onSelect={handleLocationSelect}
-                  placeholder="Enter business address (e.g., 123 Main St, New York, NY)"
-                />
-
-                <AnimatePresence>
-                  {showGenerate && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <Button
-                        onClick={generateScore}
-                        className="h-16 w-full rounded-xl bg-gradient-to-r from-cyan-600 to-yellow-600 font-semibold text-white shadow-xl transition-all duration-300 hover:from-cyan-700 hover:to-yellow-700 hover:shadow-2xl"
-                      >
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="flex items-center space-x-3"
-                        >
-                          <Zap className="h-6 w-6" />
-                          <span>Generate GeoScope Score</span>
-                          <ArrowRight className="h-5 w-5" />
-                        </motion.div>
-                      </Button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* features */}
-        <div className="mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="mb-12"
-          >
-            <h3 className="mb-4 text-4xl font-bold text-white">
-              Key Features
-            </h3>
-            <p className="max-w-2xl text-xl text-blue-200">
-              Get comprehensive insights to make informed business location
-              decisions
-            </p>
-          </motion.div>
-
-          <div className="mb-20 grid gap-8 md:grid-cols-3">
-            {features.map((f, i) => (
+          {/* CTA */}
+          <AnimatePresence>
+            {canGenerate && (
               <motion.div
-                key={f.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.2, duration: 0.6 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -10, scale: 1.02 }}
-                className="group"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="mt-8 flex w-full justify-center"
               >
-                <Card className="h-full overflow-hidden backdrop-blur-xl border-cyan-500/30 bg-slate-800/30 transition-all duration-500 hover:border-yellow-500/50">
-                  <CardContent className="p-0">
-                    <div className="relative h-48 overflow-hidden">
-                      {f.visualType === "report" ? (
-                        <ThreeDReportPreview className="h-full w-full" />
-                      ) : (
-                        <ThreeDVisualization
-                          type={f.visualType as any}
-                          className="h-full w-full"
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
-                    </div>
-                    <div className="p-6">
-                      <div className="mb-4 flex items-center space-x-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-yellow-500 shadow-lg">
-                          <f.icon className="h-6 w-6 text-white" />
-                        </div>
-                        <h4 className="text-xl font-semibold text-white transition-colors group-hover:text-cyan-300">
-                          {f.title}
-                        </h4>
-                      </div>
-                      <p className="text-blue-200">{f.description}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <Button
+                  onClick={openBizModal}
+                  className="w-60 h-14 rounded-full bg-gradient-to-r from-cyan-600 to-yellow-600 py-4 text-lg hover:shadow-[0_0_20px_#22d3ee]"
+                >
+                  Generate Report
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
               </motion.div>
-            ))}
-          </div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* footer */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="border-t border-slate-700 py-8"
-        >
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-blue-500/50">
-              <Image
-                src="/logo.png"
-                alt="GeoScope Credit"
-                width={40}
-                height={40}
-                className="object-cover"
-              />
+        <div className="relative flex w-full max-w-sm justify-center flex-col border-t border-slate-800 p-10 md:border-l md:border-t-0 bg-slate-900/40 rounded-t-3xl md:rounded-none">
+          <h3 className="mb-4 text-2xl font-bold text-center text-cyan-300">How GeoScope Works</h3>
+          <p className="mb-8 text-sm text-slate-300 text-center px-2">
+            GeoScope helps you find the best shop location by analyzing critical geospatial factors like traffic, safety, and accessibility then generates a location intelligence report in one click.
+          </p>
+
+          <div className="space-y-8">
+            <div className="flex items-start space-x-4">
+              <div className="flex h-12 w-24 items-center justify-center rounded-full bg-cyan-600/20">
+                <Zap className="text-cyan-300" />
+              </div>
+              <div>
+                <h4 className="text-white font-semibold">Step 1: Analyze the Location</h4>
+                <p className="text-slate-400 text-sm">
+                  Understand foot traffic, nearby services, safety, zoning, and competition.
+                </p>
+              </div>
             </div>
-            <div className="text-blue-300">
-              Coded by Harman • From in Canada
+
+            <div className="flex items-start space-x-4">
+              <div className="flex h-12 w-24 items-center justify-center rounded-full bg-yellow-600/20">
+                <TrendingUp className="text-yellow-300" />
+              </div>
+              <div>
+                <h4 className="text-white font-semibold">Step 2: Get Your GeoScore</h4>
+                <p className="text-slate-400 text-sm">
+                  Receive a score (0–100) that summarizes how optimal your location is for a business.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-4">
+              <div className="flex h-12 w-24 items-center justify-center rounded-full bg-green-600/20">
+                <Shield className="text-green-300" />
+              </div>
+              <div>
+                <h4 className="text-white font-semibold">Step 3: Get Actionable Insights</h4>
+                <p className="text-slate-400 text-sm">
+                  See what’s working and what can be improved — like traffic access or business zone.
+                </p>
+              </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
+
+      <footer className="absolute bottom-0 left-0 right-0 flex items-center justify-center space-x-3 border-t border-slate-800 bg-slate-900/70 py-3 backdrop-blur-sm">
+        <Image
+          src="/logo.png"
+          alt="GeoScope"
+          width={28}
+          height={28}
+          className="rounded-full border border-cyan-500"
+        />
+        <span className="text-sm text-blue-300">
+          Coded by Harman • Built in Canada
+        </span>
+      </footer>
+
+      <BusinessTypeSelector
+        isOpen={showBiz}
+        onClose={() => setShowBiz(false)}
+        onSelect={handleBizChoose}
+      />
+
+      {loadError && (
+        <div className="absolute inset-x-0 top-0 z-50 bg-red-600 p-3 text-center text-sm font-medium">
+          Google Maps failed to load – check API key
+        </div>
+      )}
     </div>
   )
 }
