@@ -324,7 +324,7 @@ export default function HomePage() {
             transition={{ delay: 0.6, duration: 0.8 }}
             className="h-[500px] md:h-[500px] md:w-2/3 lg:w-1/2"
           >
-            <ThreeDVisualization type="hero" className="h-full w-full" />
+              <ThreeDReportPreview className="h-full w-full" />
           </motion.div>
         </div>
 
