@@ -256,7 +256,7 @@ export function LocationAutocomplete({
 
       <div className="flex items-center space-x-4 mt-4">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
-        <span className="text-blue-300 text-sm font-medium px-4 py-4 bg-slate-800/50 rounded-full">OR</span>
+        <span className="text-blue-300 text-sm font-medium px-4 py-5 bg-slate-800/50 rounded-full">OR</span>
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
       </div>
 
@@ -264,7 +264,7 @@ export function LocationAutocomplete({
         onClick={getCurrentLocation}
         variant="outline"
         disabled={isGettingLocation}
-        className="w-full mt-8 border-blue-600 text-blue-300 hover:bg-blue-900/30 h-14 text-lg rounded-xl"
+        className="w-full mt-10 border-blue-600 text-blue-300 hover:bg-blue-900/30 h-14 text-lg rounded-xl"
       >
         {isGettingLocation ? (
           <>

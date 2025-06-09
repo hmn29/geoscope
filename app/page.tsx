@@ -101,7 +101,7 @@ export default function HomePage() {
       )}
 
       <div className="absolute inset-0 flex flex-col md:flex-row bg-slate-900/60 backdrop-blur-sm">
-        <div className="flex flex-1 flex-col px-6 pt-10 md:px-14 md:pt-16">
+        <div className="flex flex-1 flex-col px-6 pt-10 md:px-14 md:pt-24†">
           <div className="mb-10 flex items-center space-x-3">
             <Image
               src="/logo.png"
