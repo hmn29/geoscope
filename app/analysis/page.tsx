@@ -436,9 +436,11 @@ export default function AnalysisPage() {
   }, [])
 
   // Trigger confetti animation for high scores
+  const confettiTriggered = useRef(false)
   useEffect(() => {
     if (geoScore >= 75 && !isLoading && !scoreAnimated) {
       setShowConfetti(true)
+      confettiTriggered.current = true
       const timer = setTimeout(() => setShowConfetti(false), 3000)
       return () => clearTimeout(timer)
     }
@@ -1087,7 +1089,7 @@ export default function AnalysisPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="lg:w-1/2 h-[900px]"
+            className="lg:w-1/2 h-[850px]"
           >
             <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg h-full">
               <CardHeader>
