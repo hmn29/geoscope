@@ -113,86 +113,43 @@ export function MapView({
           setOverlays([])
         }
 
-        // Create map instance with minimal POI visibility
+        // Create map instance with enhanced dark theme
         const mapInstance = new window.google.maps.Map(mapRef.current, {
           center: coordinates,
           zoom: 15,
           styles: [
-            // Hide most POIs but keep city/area names
-            {
-              featureType: "poi.business",
-              stylers: [{ visibility: "off" }],
-            },
-            {
-              featureType: "poi.school",
-              stylers: [{ visibility: "off" }],
-            },
-            {
-              featureType: "poi.medical",
-              stylers: [{ visibility: "off" }],
-            },
-            {
-              featureType: "poi.attraction",
-              stylers: [{ visibility: "off" }],
-            },
-            {
-              featureType: "poi.government",
-              stylers: [{ visibility: "off" }],
-            },
-            {
-              featureType: "poi.park",
-              elementType: "labels",
-              stylers: [{ visibility: "simplified" }],
-            },
-            {
-              featureType: "poi.place_of_worship",
-              stylers: [{ visibility: "off" }],
-            },
-            {
-              featureType: "poi.sports_complex",
-              stylers: [{ visibility: "off" }],
-            },
-            // Keep city and area names visible
-            {
-              featureType: "administrative.locality",
-              elementType: "labels.text",
-              stylers: [{ visibility: "on" }],
-            },
-            {
-              featureType: "administrative.neighborhood",
-              elementType: "labels.text",
-              stylers: [{ visibility: "on" }],
-            },
-            // Hide transit labels but keep stations visible
-            {
-              featureType: "transit.station",
-              elementType: "labels",
-              stylers: [{ visibility: "off" }],
-            },
-            // Dark theme
-            { elementType: "geometry", stylers: [{ color: "#1a1a2e" }] },
-            { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
-            { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] },
-            { featureType: "administrative.country", elementType: "geometry.stroke", stylers: [{ color: "#4b6878" }] },
-            {
-              featureType: "administrative.land_parcel",
-              elementType: "labels.text.fill",
-              stylers: [{ color: "#64779e" }],
-            },
-            { featureType: "administrative.province", elementType: "geometry.stroke", stylers: [{ color: "#4b6878" }] },
-            { featureType: "landscape.man_made", elementType: "geometry.stroke", stylers: [{ color: "#334e87" }] },
-            { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+            // Enhanced dark theme with better contrast
+            { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
+            { featureType: "administrative.country", elementType: "geometry.stroke", stylers: [{ color: "#334155" }] },
+            { featureType: "administrative.land_parcel", elementType: "labels.text.fill", stylers: [{ color: "#475569" }] },
+            { featureType: "administrative.province", elementType: "geometry.stroke", stylers: [{ color: "#334155" }] },
+            { featureType: "landscape.man_made", elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },
+            { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+            { featureType: "poi", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+            { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+            { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#0f3f2f" }] },
+            { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#10b981" }] },
             { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
-            { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#98a5be" }] },
-            { featureType: "road", elementType: "labels.text.stroke", stylers: [{ color: "#1e293b" }] },
+            { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+            { featureType: "road", elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
             { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#475569" }] },
-            { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#334155" }] },
-            { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#cbd5e1" }] },
-            { featureType: "road.highway", elementType: "labels.text.stroke", stylers: [{ color: "#1e293b" }] },
-            { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2563eb" }] },
+            { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },
+            { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+            { featureType: "road.highway", elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
+            { featureType: "transit", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
             { featureType: "transit.station", elementType: "geometry", stylers: [{ color: "#3b82f6" }] },
             { featureType: "water", elementType: "geometry", stylers: [{ color: "#0c4a6e" }] },
-            { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#4e6d70" }] },
+            { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#0ea5e9" }] },
+            // Hide most POIs for cleaner look
+            { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+            { featureType: "poi.school", stylers: [{ visibility: "off" }] },
+            { featureType: "poi.medical", stylers: [{ visibility: "off" }] },
+            { featureType: "poi.attraction", stylers: [{ visibility: "off" }] },
+            { featureType: "poi.government", stylers: [{ visibility: "off" }] },
+            { featureType: "poi.place_of_worship", stylers: [{ visibility: "off" }] },
+            { featureType: "poi.sports_complex", stylers: [{ visibility: "off" }] },
           ],
           disableDefaultUI: true,
           zoomControl: true,
@@ -202,35 +159,44 @@ export function MapView({
           clickableIcons: false,
         })
 
-        // Add main location marker (RED PIN)
+        // Add main location marker (Enhanced RED PIN)
         const mainMarker = new window.google.maps.Marker({
           position: coordinates,
           map: mapInstance,
           title: selectedLocation,
           icon: {
             url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-              <svg width="48" height="60" viewBox="0 0 48 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M24 0C10.745 0 0 10.745 0 24c0 18 24 36 24 36s24-18 24-36C48 10.745 37.255 0 24 0z" fill="#EF4444"/>
-                <circle cx="24" cy="24" r="12" fill="#FFFFFF"/>
-                <circle cx="24" cy="24" r="6" fill="#EF4444"/>
-                <circle cx="24" cy="24" r="2" fill="#FFFFFF"/>
+              <svg width="60" height="75" viewBox="0 0 60 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge> 
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <path d="M30 0C13.431 0 0 13.431 0 30c0 22.5 30 45 30 45s30-22.5 30-45C60 13.431 46.569 0 30 0z" fill="#EF4444" filter="url(#glow)"/>
+                <circle cx="30" cy="30" r="15" fill="#FFFFFF"/>
+                <circle cx="30" cy="30" r="8" fill="#EF4444"/>
+                <circle cx="30" cy="30" r="3" fill="#FFFFFF"/>
               </svg>
             `)}`,
-            scaledSize: new window.google.maps.Size(48, 60),
-            anchor: new window.google.maps.Point(24, 60),
+            scaledSize: new window.google.maps.Size(60, 75),
+            anchor: new window.google.maps.Point(30, 75),
           },
           zIndex: 1000,
         })
 
         const newMarkers = [mainMarker]
 
-        // Add 2km analysis radius circle
+        // Add 2km analysis radius circle with enhanced styling
         const radiusCircle = new window.google.maps.Circle({
           strokeColor: "#3B82F6",
           strokeOpacity: 0.8,
-          strokeWeight: 2,
+          strokeWeight: 3,
           fillColor: "#3B82F6",
-          fillOpacity: 0.05,
+          fillOpacity: 0.08,
           map: mapInstance,
           center: coordinates,
           radius: 2000,
@@ -238,7 +204,7 @@ export function MapView({
 
         const newOverlays = [radiusCircle]
 
-        // Add nearby places markers
+        // Add nearby places markers with enhanced info windows
         const infoWindow = new window.google.maps.InfoWindow()
 
         if (nearbyPlaces && nearbyPlaces.length > 0) {
@@ -246,16 +212,30 @@ export function MapView({
             if (!place.geometry || !place.geometry.location) continue
 
             let iconColor = "#4CAF50"
-            const iconSize = 16
+            let iconEmoji = "🏢"
+            const iconSize = 20
 
             if (place.types?.includes("bus_station") || place.types?.includes("transit_station")) {
               iconColor = "#2196F3"
+              iconEmoji = "🚌"
             } else if (place.types?.includes("train_station") || place.types?.includes("subway_station")) {
               iconColor = "#9C27B0"
+              iconEmoji = "🚊"
             } else if (place.types?.includes("restaurant") || place.types?.includes("cafe")) {
               iconColor = "#FF9800"
+              iconEmoji = "🍽️"
             } else if (place.types?.includes("store") || place.types?.includes("shop")) {
               iconColor = "#F44336"
+              iconEmoji = "🏪"
+            } else if (place.types?.includes("hospital")) {
+              iconColor = "#E91E63"
+              iconEmoji = "🏥"
+            } else if (place.types?.includes("school")) {
+              iconColor = "#673AB7"
+              iconEmoji = "🏫"
+            } else if (place.types?.includes("bank")) {
+              iconColor = "#795548"
+              iconEmoji = "🏦"
             }
 
             const marker = new window.google.maps.Marker({
@@ -269,6 +249,7 @@ export function MapView({
                 url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
                   <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 ${iconSize} ${iconSize}" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="${iconSize / 2}" cy="${iconSize / 2}" r="${iconSize / 2 - 1}" fill="${iconColor}" stroke="#FFFFFF" strokeWidth="2"/>
+                    <text x="${iconSize / 2}" y="${iconSize / 2 + 2}" text-anchor="middle" font-size="8" fill="#FFFFFF">${iconEmoji}</text>
                   </svg>
                 `)}`,
                 scaledSize: new window.google.maps.Size(iconSize, iconSize),
@@ -279,11 +260,13 @@ export function MapView({
 
             marker.addListener("click", () => {
               const content = `
-                <div style="color: #333; padding: 8px; max-width: 200px;">
-                  <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${place.name}</h3>
-                  <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">${place.vicinity || ""}</p>
-                  ${place.rating ? `<div style="margin: 4px 0; font-size: 12px;"><strong>Rating:</strong> ${place.rating}⭐ (${place.user_ratings_total || 0} reviews)</div>` : ""}
-                  <div style="margin: 4px 0; font-size: 11px; color: #888;">
+                <div style="color: #333; padding: 12px; max-width: 250px; font-family: system-ui; background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 8px;">
+                  <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #1e293b;">${place.name}</h3>
+                  <p style="margin: 0 0 8px 0; font-size: 12px; color: #64748b;">${place.vicinity || ""}</p>
+                  ${place.rating ? `<div style="margin: 4px 0; font-size: 12px; display: flex; align-items: center;"><strong style="color: #1e293b;">Rating:</strong> <span style="margin-left: 4px; color: #f59e0b;">${place.rating}⭐</span> <span style="margin-left: 4px; color: #64748b;">(${place.user_ratings_total || 0} reviews)</span></div>` : ""}
+                  ${place.price_level !== undefined ? `<div style="margin: 4px 0; font-size: 12px;"><strong style="color: #1e293b;">Price:</strong> ${"$".repeat(place.price_level + 1)}</div>` : ""}
+                  ${place.opening_hours ? `<div style="margin: 4px 0; font-size: 12px;"><strong style="color: #1e293b;">Status:</strong> <span style="color: ${place.opening_hours.open_now ? '#10b981' : '#ef4444'};">${place.opening_hours.open_now ? 'Open Now' : 'Closed'}</span></div>` : ""}
+                  <div style="margin: 8px 0 0 0; font-size: 11px; color: #94a3b8; background: #f1f5f9; padding: 4px 8px; border-radius: 4px;">
                     ${place.types?.slice(0, 3).join(", ") || ""}
                   </div>
                 </div>
@@ -320,9 +303,9 @@ export function MapView({
       markers.forEach((marker) => marker.setMap(null))
       overlays.forEach((overlay) => overlay.setMap(null))
     }
-  }, [coordinates, selectedLocation, mapLoadAttempts, locationKey]) // Added locationKey to dependencies
+  }, [coordinates, selectedLocation, mapLoadAttempts, locationKey])
 
-  // Update overlays based on active layer
+  // Update overlays based on active layer with enhanced visualizations
   useEffect(() => {
     if (!map || !window.google) return
 
@@ -334,17 +317,15 @@ export function MapView({
     const newMarkers = [markers[0]] // Keep main marker
 
     if (activeLayer === "footHeat") {
-      // Generate realistic foot traffic zones based on nearby amenities
+      // Enhanced foot traffic zones with better visualization
       const trafficSources = nearbyPlaces.filter((place) =>
         place.types?.some((t: string) =>
-          ["restaurant", "cafe", "shopping_mall", "store", "transit_station", "bus_station", "train_station"].includes(
-            t,
-          ),
+          ["restaurant", "cafe", "shopping_mall", "store", "transit_station", "bus_station", "train_station"].includes(t),
         ),
       )
 
       // Create traffic zones around high-activity areas
-      trafficSources.slice(0, 8).forEach((source, index) => {
+      trafficSources.slice(0, 12).forEach((source, index) => {
         if (!source.geometry?.location) return
 
         // Calculate distance from main location
@@ -354,15 +335,15 @@ export function MapView({
         )
 
         // Closer places generate higher traffic
-        const intensity = Math.max(0.1, 1 - distance * 1000) // Convert to intensity
-        const radius = 150 + intensity * 200 // Radius based on intensity
+        const intensity = Math.max(0.1, 1 - distance * 1000)
+        const radius = 120 + intensity * 180
 
         let color = "#EF4444" // Red for low traffic
         let opacity = 0.15
 
         if (intensity > 0.7) {
           color = "#10B981" // Green for high traffic
-          opacity = 0.3
+          opacity = 0.35
         } else if (intensity > 0.4) {
           color = "#F59E0B" // Yellow for medium traffic
           opacity = 0.25
@@ -370,7 +351,7 @@ export function MapView({
 
         const circle = new window.google.maps.Circle({
           strokeColor: color,
-          strokeOpacity: 0.8,
+          strokeOpacity: 0.9,
           strokeWeight: 2,
           fillColor: color,
           fillOpacity: opacity,
@@ -384,34 +365,35 @@ export function MapView({
         newOverlays.push(circle)
       })
 
-      // Add a high traffic zone near the main location if there are few traffic sources
-      if (trafficSources.length < 3) {
-        const mainTrafficCircle = new window.google.maps.Circle({
-          strokeColor: "#10B981",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: "#10B981",
-          fillOpacity: 0.25,
-          map: map,
-          center: coordinates,
-          radius: 200,
-        })
-        newOverlays.push(mainTrafficCircle)
-      }
+      // Add main traffic zone around our location
+      const mainTrafficCircle = new window.google.maps.Circle({
+        strokeColor: "#10B981",
+        strokeOpacity: 1,
+        strokeWeight: 3,
+        fillColor: "#10B981",
+        fillOpacity: 0.25,
+        map: map,
+        center: coordinates,
+        radius: 250,
+      })
+      newOverlays.push(mainTrafficCircle)
+
     } else if (activeLayer === "hazardHeat") {
-      // Generate safety zones based on real factors - CHANGED TO GREEN FOR SAFE AREAS
+      // Enhanced safety zones - GREEN for safe areas
       const safetyFactors = {
         transitStations: transitStations.length,
         restaurants: nearbyPlaces.filter((p) => p.types?.includes("restaurant")).length,
         hospitals: nearbyPlaces.filter((p) => p.types?.includes("hospital")).length,
         schools: nearbyPlaces.filter((p) => p.types?.includes("school")).length,
+        police: nearbyPlaces.filter((p) => p.types?.includes("police")).length,
       }
 
       // Create safety zones based on actual amenities
       const safeAreas = [
-        ...transitStations.slice(0, 3),
-        ...nearbyPlaces.filter((p) => p.types?.includes("hospital")).slice(0, 2),
-        ...nearbyPlaces.filter((p) => p.types?.includes("school")).slice(0, 2),
+        ...transitStations.slice(0, 4),
+        ...nearbyPlaces.filter((p) => p.types?.includes("hospital")).slice(0, 3),
+        ...nearbyPlaces.filter((p) => p.types?.includes("school")).slice(0, 3),
+        ...nearbyPlaces.filter((p) => p.types?.includes("police")).slice(0, 2),
       ]
 
       safeAreas.forEach((area, index) => {
@@ -425,18 +407,18 @@ export function MapView({
         let radius = 300
 
         if (isMajorSafety) {
-          color = "#10B981" // Keep green for hospitals/police
-          opacity = 0.35
+          color = "#10B981"
+          opacity = 0.4
           radius = 500
         } else if (isTransit) {
-          color = "#10B981" // Green for transit areas too
-          opacity = 0.25
+          color = "#10B981"
+          opacity = 0.3
           radius = 350
         }
 
         const circle = new window.google.maps.Circle({
           strokeColor: color,
-          strokeOpacity: 0.9,
+          strokeOpacity: 1,
           strokeWeight: 2,
           fillColor: color,
           fillOpacity: opacity,
@@ -450,8 +432,7 @@ export function MapView({
         newOverlays.push(circle)
       })
 
-      // Add some moderate risk areas (areas with fewer amenities)
-      // Use a deterministic approach based on coordinates to ensure different locations get different patterns
+      // Add moderate risk areas for contrast
       const seed = Math.abs(Math.sin(coordinates.lat * 12.9898 + coordinates.lng * 78.233) * 43758.5453)
       const rand = (o = 0) => {
         const x = Math.sin(seed + o) * 1e4
@@ -460,35 +441,36 @@ export function MapView({
 
       const riskAreas = [
         {
-          lat: coordinates.lat + (rand(1) - 0.5) * 0.01,
-          lng: coordinates.lng + (rand(2) - 0.5) * 0.01,
+          lat: coordinates.lat + (rand(1) - 0.5) * 0.008,
+          lng: coordinates.lng + (rand(2) - 0.5) * 0.008,
         },
         {
-          lat: coordinates.lat + (rand(3) - 0.5) * 0.01,
-          lng: coordinates.lng + (rand(4) - 0.5) * 0.01,
+          lat: coordinates.lat + (rand(3) - 0.5) * 0.008,
+          lng: coordinates.lng + (rand(4) - 0.5) * 0.008,
         },
       ]
 
       riskAreas.forEach((area) => {
         const circle = new window.google.maps.Circle({
           strokeColor: "#F59E0B",
-          strokeOpacity: 0.8,
+          strokeOpacity: 0.9,
           strokeWeight: 2,
           fillColor: "#F59E0B",
           fillOpacity: 0.2,
           map: map,
           center: area,
-          radius: 250,
+          radius: 200,
         })
         newOverlays.push(circle)
       })
+
     } else if (activeLayer === "competitors") {
-      // Show competitor shops with shop icons
+      // Enhanced competitor visualization
       const competitors = nearbyPlaces.filter((place) =>
         place.types?.some((t: string) => ["store", "restaurant", "shop", "establishment", "shopping_mall"].includes(t)),
       )
 
-      competitors.slice(0, 10).forEach((competitor) => {
+      competitors.slice(0, 15).forEach((competitor) => {
         if (!competitor.geometry?.location) return
 
         const marker = new window.google.maps.Marker({
@@ -500,28 +482,29 @@ export function MapView({
           title: competitor.name,
           icon: {
             url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="18" cy="18" r="16" fill="#F59E0B" stroke="#FFFFFF" strokeWidth="2"/>
-                <rect x="10" y="12" width="16" height="12" rx="2" fill="#FFFFFF"/>
-                <rect x="12" y="14" width="12" height="2" fill="#F59E0B"/>
-                <rect x="12" y="17" width="8" height="1" fill="#F59E0B"/>
-                <rect x="12" y="19" width="10" height="1" fill="#F59E0B"/>
-                <rect x="12" y="21" width="6" height="1" fill="#F59E0B"/>
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="20" r="18" fill="#F59E0B" stroke="#FFFFFF" strokeWidth="2"/>
+                <rect x="12" y="14" width="16" height="12" rx="2" fill="#FFFFFF"/>
+                <rect x="14" y="16" width="12" height="2" fill="#F59E0B"/>
+                <rect x="14" y="19" width="8" height="1" fill="#F59E0B"/>
+                <rect x="14" y="21" width="10" height="1" fill="#F59E0B"/>
+                <rect x="14" y="23" width="6" height="1" fill="#F59E0B"/>
               </svg>
             `)}`,
-            scaledSize: new window.google.maps.Size(36, 36),
-            anchor: new window.google.maps.Point(18, 18),
+            scaledSize: new window.google.maps.Size(40, 40),
+            anchor: new window.google.maps.Point(20, 20),
           },
           zIndex: 200,
         })
 
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
-            <div style="color: #333; padding: 12px; max-width: 250px; font-family: system-ui;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #F59E0B;">🏪 ${competitor.name}</h3>
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: #666;">${competitor.vicinity || ""}</p>
-              ${competitor.rating ? `<div style="margin: 4px 0; font-size: 12px;"><strong>Rating:</strong> ${competitor.rating}⭐ (${competitor.user_ratings_total || 0} reviews)</div>` : ""}
-              <div style="margin: 8px 0; font-size: 11px; color: #888; background: #FEF3C7; padding: 4px 8px; border-radius: 4px; display: inline-block;">
+            <div style="color: #333; padding: 12px; max-width: 280px; font-family: system-ui; background: linear-gradient(135deg, #fef3c7, #fbbf24); border-radius: 8px;">
+              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #92400e;">🏪 ${competitor.name}</h3>
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #78350f;">${competitor.vicinity || ""}</p>
+              ${competitor.rating ? `<div style="margin: 4px 0; font-size: 12px;"><strong style="color: #92400e;">Rating:</strong> ${competitor.rating}⭐ (${competitor.user_ratings_total || 0} reviews)</div>` : ""}
+              ${competitor.price_level !== undefined ? `<div style="margin: 4px 0; font-size: 12px;"><strong style="color: #92400e;">Price Level:</strong> ${"$".repeat(competitor.price_level + 1)}</div>` : ""}
+              <div style="margin: 8px 0; font-size: 11px; color: #78350f; background: #fde68a; padding: 4px 8px; border-radius: 4px; display: inline-block;">
                 Competitor Business
               </div>
             </div>
@@ -534,9 +517,10 @@ export function MapView({
 
         newMarkers.push(marker)
       })
+
     } else if (activeLayer === "access") {
-      // Show transit stations with specific icons
-      console.log("Showing transit stations:", transitStations.length)
+      // Enhanced transit station visualization
+      console.log("Showing enhanced transit stations:", transitStations.length)
 
       transitStations.forEach((transit) => {
         if (!transit.geometry?.location) return
@@ -553,37 +537,37 @@ export function MapView({
           title: transit.name,
           icon: {
             url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="20" r="18" fill="${isTrain ? "#8B5CF6" : "#2196F3"}" stroke="#FFFFFF" strokeWidth="2"/>
+              <svg width="45" height="45" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="22.5" cy="22.5" r="20" fill="${isTrain ? "#8B5CF6" : "#2196F3"}" stroke="#FFFFFF" strokeWidth="3"/>
                 ${
                   isTrain
-                    ? `<rect x="8" y="12" width="24" height="16" rx="3" fill="#FFFFFF"/>
-                       <circle cx="13" cy="24" r="2" fill="#8B5CF6"/>
-                       <circle cx="27" cy="24" r="2" fill="#8B5CF6"/>
-                       <rect x="10" y="14" width="20" height="6" fill="#8B5CF6"/>
-                       <rect x="12" y="16" width="16" height="2" fill="#FFFFFF"/>`
-                    : `<rect x="10" y="10" width="20" height="20" rx="3" fill="#FFFFFF"/>
-                       <circle cx="15" cy="26" r="1.5" fill="#2196F3"/>
-                       <circle cx="25" cy="26" r="1.5" fill="#2196F3"/>
-                       <rect x="12" y="12" width="16" height="10" fill="#2196F3"/>
-                       <rect x="14" y="14" width="12" height="6" fill="#FFFFFF"/>`
+                    ? `<rect x="10" y="14" width="25" height="17" rx="3" fill="#FFFFFF"/>
+                       <circle cx="15" cy="26" r="2" fill="#8B5CF6"/>
+                       <circle cx="30" cy="26" r="2" fill="#8B5CF6"/>
+                       <rect x="12" y="16" width="21" height="6" fill="#8B5CF6"/>
+                       <rect x="14" y="18" width="17" height="2" fill="#FFFFFF"/>`
+                    : `<rect x="12" y="12" width="21" height="21" rx="3" fill="#FFFFFF"/>
+                       <circle cx="17" cy="28" r="1.5" fill="#2196F3"/>
+                       <circle cx="28" cy="28" r="1.5" fill="#2196F3"/>
+                       <rect x="14" y="14" width="17" height="10" fill="#2196F3"/>
+                       <rect x="16" y="16" width="13" height="6" fill="#FFFFFF"/>`
                 }
               </svg>
             `)}`,
-            scaledSize: new window.google.maps.Size(40, 40),
-            anchor: new window.google.maps.Point(20, 20),
+            scaledSize: new window.google.maps.Size(45, 45),
+            anchor: new window.google.maps.Point(22.5, 22.5),
           },
           zIndex: 300,
         })
 
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
-            <div style="color: #333; padding: 12px; max-width: 250px; font-family: system-ui;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: ${isTrain ? "#8B5CF6" : "#2196F3"};">
+            <div style="color: #333; padding: 12px; max-width: 280px; font-family: system-ui; background: linear-gradient(135deg, ${isTrain ? '#f3e8ff' : '#dbeafe'}, ${isTrain ? '#c4b5fd' : '#93c5fd'}); border-radius: 8px;">
+              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: ${isTrain ? "#6b21a8" : "#1e40af"};">
                 ${isTrain ? "🚊" : "🚌"} ${transit.name}
               </h3>
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: #666;">${transit.vicinity || ""}</p>
-              <div style="margin: 8px 0; font-size: 11px; color: #888; background: ${isTrain ? "#F3E8FF" : "#DBEAFE"}; padding: 4px 8px; border-radius: 4px; display: inline-block;">
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: ${isTrain ? "#7c3aed" : "#2563eb"};">${transit.vicinity || ""}</p>
+              <div style="margin: 8px 0; font-size: 11px; color: ${isTrain ? "#6b21a8" : "#1e40af"}; background: ${isTrain ? "#ede9fe" : "#e0f2fe"}; padding: 4px 8px; border-radius: 4px; display: inline-block;">
                 ${isTrain ? "Train/Subway Station" : "Bus Station"}
               </div>
             </div>
@@ -596,33 +580,32 @@ export function MapView({
 
         newMarkers.push(marker)
 
-        // Add accessibility circle
+        // Add enhanced accessibility circle
         const circle = new window.google.maps.Circle({
           strokeColor: isTrain ? "#8B5CF6" : "#2196F3",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
+          strokeOpacity: 1,
+          strokeWeight: 3,
           fillColor: isTrain ? "#8B5CF6" : "#2196F3",
-          fillOpacity: 0.1,
+          fillOpacity: 0.15,
           map: map,
           center: {
             lat: transit.geometry.location.lat,
             lng: transit.geometry.location.lng,
           },
-          radius: isTrain ? 400 : 200,
+          radius: isTrain ? 500 : 300,
         })
         newOverlays.push(circle)
       })
 
-      // If no transit stations found, add a message
+      // If no transit stations found, show info
       if (transitStations.length === 0) {
-        // Create an info window at the center
         const noTransitInfo = new window.google.maps.InfoWindow({
           content: `
-            <div style="color: #333; padding: 12px; max-width: 250px; font-family: system-ui;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #EF4444;">
+            <div style="color: #333; padding: 12px; max-width: 250px; font-family: system-ui; background: linear-gradient(135deg, #fee2e2, #fca5a5); border-radius: 8px;">
+              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #dc2626;">
                 No Transit Stations Found
               </h3>
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: #666;">
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #991b1b;">
                 No public transit stations were found within 2km of this location.
               </p>
             </div>
@@ -630,10 +613,8 @@ export function MapView({
           position: coordinates,
         })
 
-        // Open the info window
         noTransitInfo.open(map)
 
-        // Store it to close later
         newOverlays.push({
           setMap: (m: any) => {
             if (!m) noTransitInfo.close()
@@ -644,7 +625,7 @@ export function MapView({
 
     setOverlays(newOverlays)
     setMarkers(newMarkers)
-  }, [activeLayer, map, nearbyPlaces, transitStations, coordinates, locationKey]) // Added locationKey to dependencies
+  }, [activeLayer, map, nearbyPlaces, transitStations, coordinates, locationKey])
 
   const handleRetry = () => {
     setMapLoadAttempts((prev) => prev + 1)
@@ -653,7 +634,7 @@ export function MapView({
   return (
     <div className="relative h-full rounded-2xl overflow-hidden bg-slate-900/50">
       {isMapLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-800/90 z-10 rounded-2xl">
+        <div className="absolute inset-0 flex items-center justify-center bg-white/5 backdrop-blur-xl z-10 rounded-2xl">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-white text-lg">Loading interactive map...</p>
@@ -663,8 +644,8 @@ export function MapView({
       )}
 
       {mapLoadError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-800/95 z-10 rounded-2xl">
-          <div className="text-center p-8 bg-slate-700/90 rounded-xl border border-red-500/30 max-w-md">
+        <div className="absolute inset-0 flex items-center justify-center bg-white/5 backdrop-blur-xl z-10 rounded-2xl">
+          <div className="text-center p-8 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 max-w-md">
             <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
             <h3 className="text-white text-xl font-bold mb-3">Map Unavailable</h3>
             <p className="text-red-200 mb-6">
@@ -680,10 +661,10 @@ export function MapView({
 
       <div ref={mapRef} className="w-full h-full" />
 
-      {/* Parameter Info Dropdown */}
+      {/* Enhanced Parameter Info */}
       {!mapLoadError && !isMapLoading && safeFactor && (
         <div className="absolute top-6 right-6">
-          <Card className="bg-slate-800/95 backdrop-blur-md border border-slate-600/50 max-w-sm">
+          <Card className="bg-white/10 backdrop-blur-xl border border-white/20 max-w-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-white text-sm flex items-center space-x-2">
@@ -722,7 +703,7 @@ export function MapView({
 
       {/* Enhanced Legend */}
       {!mapLoadError && !isMapLoading && (
-        <div className="absolute bottom-6 left-6 bg-slate-800/95 backdrop-blur-md rounded-xl p-4 border border-slate-600/50 max-w-xs">
+        <div className="absolute bottom-6 left-6 bg-white/10 backdrop-blur-xl rounded-xl p-4 border border-white/20 max-w-xs">
           <h4 className="text-white font-semibold mb-3 flex items-center">
             <div className="w-2 h-2 bg-cyan-400 rounded-full mr-2 animate-pulse"></div>
             Map Legend
@@ -732,21 +713,21 @@ export function MapView({
               <div className="w-6 h-6 bg-red-500 rounded-lg flex items-center justify-center">
                 <div className="w-2 h-2 bg-white rounded-full"></div>
               </div>
-              <span className="text-cyan-200">Your Location</span>
+              <span className="text-white/80">Your Location</span>
             </div>
             {activeLayer === "footHeat" && (
               <>
                 <div className="flex items-center space-x-3">
                   <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                  <span className="text-cyan-200">High Traffic Zone</span>
+                  <span className="text-white/80">High Traffic Zone</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
-                  <span className="text-cyan-200">Medium Traffic</span>
+                  <span className="text-white/80">Medium Traffic</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                  <span className="text-cyan-200">Low Traffic</span>
+                  <span className="text-white/80">Low Traffic</span>
                 </div>
               </>
             )}
@@ -754,11 +735,11 @@ export function MapView({
               <>
                 <div className="flex items-center space-x-3">
                   <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                  <span className="text-cyan-200">Safe Area</span>
+                  <span className="text-white/80">Safe Area</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
-                  <span className="text-cyan-200">Moderate Risk</span>
+                  <span className="text-white/80">Moderate Risk</span>
                 </div>
               </>
             )}
@@ -767,7 +748,7 @@ export function MapView({
                 <div className="w-5 h-5 bg-yellow-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">
                   🏪
                 </div>
-                <span className="text-cyan-200">Competitor Businesses</span>
+                <span className="text-white/80">Competitor Businesses</span>
               </div>
             )}
             {activeLayer === "access" && (
@@ -776,7 +757,7 @@ export function MapView({
                   <div className="w-5 h-5 bg-purple-500 rounded-lg flex items-center justify-center text-white text-xs">
                     🚊
                   </div>
-                  <span className="text-cyan-200">
+                  <span className="text-white/80">
                     Train/Subway (
                     {
                       transitStations.filter(
@@ -790,7 +771,7 @@ export function MapView({
                   <div className="w-5 h-5 bg-blue-500 rounded-lg flex items-center justify-center text-white text-xs">
                     🚌
                   </div>
-                  <span className="text-cyan-200">
+                  <span className="text-white/80">
                     Bus Stations (
                     {
                       transitStations.filter(
@@ -802,9 +783,9 @@ export function MapView({
                 </div>
               </>
             )}
-            <div className="flex items-center space-x-3 pt-2 border-t border-slate-600/50">
+            <div className="flex items-center space-x-3 pt-2 border-t border-white/20">
               <div className="w-4 h-4 border-2 border-cyan-400 rounded-full"></div>
-              <span className="text-cyan-200">2km Analysis Area</span>
+              <span className="text-white/80">2km Analysis Area</span>
             </div>
           </div>
         </div>
