@@ -1063,7 +1063,7 @@ export default function AnalysisPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="xl:w-1/2 h-[850px] mb-10"
+            className="xl:w-1/2 h-[850px]"
           >
             <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg h-full">
               <CardHeader className="pb-3">
@@ -1085,7 +1085,7 @@ export default function AnalysisPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 h-full">
+              <CardContent className="p-4 h-[750px]">
                 <MapView
                   coordinates={coordinates}
                   selectedLocation={selectedLocation}
