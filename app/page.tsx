@@ -207,7 +207,10 @@ export default function HomePage() {
           <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
             <TabsList className="grid w-full grid-cols-3 bg-white/5 backdrop-blur-xl border border-white/20 mb-6">
               <TabsTrigger value="overview" className="data-[state=active]:bg-white/20 text-xs">Overview</TabsTrigger>
-              <TabsTrigger value="docs" className="data-[state=active]:bg-white/20 text-xs">Documentation</TabsTrigger>
+              <TabsTrigger value="docs" className="data-[state=active]:bg-white/20 text-xs">
+                <FileText className="w-4 h-4 mr-1" />
+                Docs
+              </TabsTrigger>
               <TabsTrigger value="api" className="data-[state=active]:bg-white/20 text-xs">Technical</TabsTrigger>
             </TabsList>
 
@@ -273,88 +276,66 @@ export default function HomePage() {
 
             <TabsContent value="docs" className="mt-0">
               <div className="space-y-6">
-                <Card className="bg-white/5 backdrop-blur-xl border border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center space-x-2">
-                      <Lightbulb className="w-5 h-5 text-yellow-400" />
-                      <span>Project Overview</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 text-white/80 space-y-4">
-                    <p className="text-sm">
-                      GeoScope Credit is a location intelligence platform that analyzes business locations using 
-                      Google Maps data to generate a comprehensive GeoScore (0-100). It helps entrepreneurs, 
-                      investors, and lenders make data-driven decisions about business locations.
-                    </p>
-                    
-                    <div>
-                      <h4 className="text-white font-semibold mb-2">🏗️ Architecture</h4>
-                      <ul className="text-white/60 space-y-1 text-sm">
-                        <li>• Next.js 14 with App Router</li>
-                        <li>• TypeScript for type safety</li>
-                        <li>• Google Maps JavaScript API</li>
-                        <li>• Real-time scoring algorithms</li>
-                        <li>• Vercel Edge Functions</li>
-                      </ul>
-                    </div>
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-cyan-300 mb-4">Complete Documentation</h3>
+                  <p className="text-sm text-slate-300 mb-6">
+                    Access comprehensive guides, API documentation, and technical details about how GeoScope was built.
+                  </p>
+                  
+                  <Button
+                    onClick={() => router.push("/docs")}
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 mb-6"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    View Full Documentation
+                  </Button>
+                </div>
 
-                    <div>
-                      <h4 className="text-white font-semibold mb-2">📊 Scoring Algorithm</h4>
-                      <div className="bg-slate-800/50 rounded-lg p-3 text-xs">
-                        <code className="text-green-400">
-                          GeoScore = (FootTraffic × 0.30) + (Safety × 0.20) + (Competition × 0.25) + (Accessibility × 0.25)
-                        </code>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="grid grid-cols-2 gap-4">
+                  <Card className="bg-white/5 backdrop-blur-xl border border-white/20">
+                    <CardContent className="p-4 text-center">
+                      <Download className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                      <h4 className="text-white font-semibold text-sm mb-1">Installation</h4>
+                      <p className="text-white/60 text-xs">Setup guide & requirements</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-white/5 backdrop-blur-xl border border-white/20">
+                    <CardContent className="p-4 text-center">
+                      <Layers className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                      <h4 className="text-white font-semibold text-sm mb-1">Architecture</h4>
+                      <p className="text-white/60 text-xs">System design & data flow</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-white/5 backdrop-blur-xl border border-white/20">
+                    <CardContent className="p-4 text-center">
+                      <Calculator className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
+                      <h4 className="text-white font-semibold text-sm mb-1">Scoring</h4>
+                      <p className="text-white/60 text-xs">Algorithm details & math</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-white/5 backdrop-blur-xl border border-white/20">
+                    <CardContent className="p-4 text-center">
+                      <Zap className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+                      <h4 className="text-white font-semibold text-sm mb-1">Deployment</h4>
+                      <p className="text-white/60 text-xs">Production setup guide</p>
+                    </CardContent>
+                  </Card>
+                </div>
 
-                <Card className="bg-white/5 backdrop-blur-xl border border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center space-x-2">
-                      <Download className="w-5 h-5 text-green-400" />
-                      <span>Installation Guide</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 space-y-4">
-                    <div>
-                      <h4 className="text-white font-semibold mb-2">1. Clone Repository</h4>
-                      <div className="bg-slate-800 rounded-lg p-3">
-                        <code className="text-green-400 text-xs">
-                          git clone https://github.com/yourusername/geoscope-credit.git
-                        </code>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-white font-semibold mb-2">2. Install Dependencies</h4>
-                      <div className="bg-slate-800 rounded-lg p-3">
-                        <code className="text-green-400 text-xs">
-                          npm install --legacy-peer-deps
-                        </code>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-white font-semibold mb-2">3. Environment Setup</h4>
-                      <div className="bg-slate-800 rounded-lg p-3">
-                        <code className="text-green-400 text-xs">
-                          GOOGLE_MAPS_API_KEY=your_key_here<br/>
-                          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=$&#123;GOOGLE_MAPS_API_KEY&#125;
-                        </code>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-white font-semibold mb-2">4. Run Development Server</h4>
-                      <div className="bg-slate-800 rounded-lg p-3">
-                        <code className="text-green-400 text-xs">
-                          npm run dev
-                        </code>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
+                  <h4 className="text-green-300 font-semibold mb-2">📚 What's Included</h4>
+                  <ul className="text-white/80 space-y-1 text-sm">
+                    <li>• Complete installation guide</li>
+                    <li>• System architecture diagrams</li>
+                    <li>• Scoring algorithm explanations</li>
+                    <li>• API endpoint documentation</li>
+                    <li>• Deployment instructions</li>
+                    <li>• Code examples & usage patterns</li>
+                  </ul>
+                </div>
               </div>
             </TabsContent>
 
