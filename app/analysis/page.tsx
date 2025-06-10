@@ -436,19 +436,21 @@ export default function AnalysisPage() {
   }, [])
 
   // Trigger confetti animation for high scores
-  const [hasShownConfetti, setHasShownConfetti] = useState(false);
-  const confettiTriggered = useRef(false)
+  const hasShownConfettiRef = useRef(false);
+
+  // Replace the confetti useEffect hooks
   useEffect(() => {
-  if (geoScore >= 80 && !isLoading && !hasShownConfetti) {
-    setShowConfetti(true);
-    setHasShownConfetti(true);
-    const timer = setTimeout(() => setShowConfetti(false), 3000);
-    return () => clearTimeout(timer);
-  }
-}, [geoScore, isLoading, hasShownConfetti]);
+    if (geoScore >= 80 && !isLoading && !hasShownConfettiRef.current) {
+      setShowConfetti(true);
+      hasShownConfettiRef.current = true;
+      const timer = setTimeout(() => setShowConfetti(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [geoScore, isLoading]);
+  
   useEffect(() => {
-  setHasShownConfetti(false);
-}, [selectedLocation]);
+    hasShownConfettiRef.current = false;
+  }, [selectedLocation]);
 
   // Business type mapping for competitor analysis
   const businessTypeMapping: Record<string, string[]> = {
