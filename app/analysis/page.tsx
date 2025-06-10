@@ -67,19 +67,16 @@ export default function AnalysisPage() {
   const [animationActive, setAnimationActive] = useState(false)
   const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 })
 
-  // Chart refs
   const hourlyChartRef = useRef<HTMLCanvasElement>(null)
   const weeklyChartRef = useRef<HTMLCanvasElement>(null)
   const hourlyChartInstance = useRef<any>(null)
   const weeklyChartInstance = useRef<any>(null)
 
-  // Start animation after component mounts
   useEffect(() => {
     const timer = setTimeout(() => {
       setAnimationActive(true)
     }, 500)
 
-    // Set window size safely on client side
     if (typeof window !== "undefined") {
       setWindowSize({
         width: window.innerWidth,
@@ -87,7 +84,6 @@ export default function AnalysisPage() {
       })
     }
 
-    // Add resize listener
     const handleResize = () => {
       if (typeof window !== "undefined") {
         setWindowSize({
@@ -109,7 +105,6 @@ export default function AnalysisPage() {
     }
   }, [])
 
-  // Define factors based on realTimeData with safety checks
   const factors = realTimeData
     ? [
         {
@@ -147,26 +142,23 @@ export default function AnalysisPage() {
       ]
     : []
 
-  // Generate realistic hourly data based on real-time factors
   const generateHourlyData = () => {
     const baseTraffic = realTimeData?.footTraffic || 75
     const baseSafety = realTimeData?.safety || 75
 
     return Array.from({ length: 24 }, (_, i) => {
       const hour = i
-      let trafficMultiplier = 0.3 // Base night traffic
+      let trafficMultiplier = 0.3 
       let safetyAdjustment = 0
 
-      // Traffic patterns
       if (hour >= 6 && hour <= 9)
-        trafficMultiplier = 0.7 // Morning rush
+        trafficMultiplier = 0.7 
       else if (hour >= 10 && hour <= 16)
-        trafficMultiplier = 0.9 // Day time
+        trafficMultiplier = 0.9 
       else if (hour >= 17 && hour <= 20)
-        trafficMultiplier = 1.0 // Evening peak
-      else if (hour >= 21 && hour <= 23) trafficMultiplier = 0.6 // Evening
+        trafficMultiplier = 1.0 
+      else if (hour >= 21 && hour <= 23) trafficMultiplier = 0.6 
 
-      // Safety adjustments (lower at night)
       if (hour >= 22 || hour <= 5) safetyAdjustment = -15
       else if (hour >= 6 && hour <= 18) safetyAdjustment = 5
 
@@ -183,7 +175,6 @@ export default function AnalysisPage() {
     })
   }
 
-  // Generate realistic weekly data
   const generateWeeklyData = () => {
     const baseTraffic = realTimeData?.footTraffic || 75
     const baseCompetition = realTimeData?.competition || 75
@@ -193,7 +184,6 @@ export default function AnalysisPage() {
       let trafficMultiplier = 1.0
       let salesMultiplier = 0.7
 
-      // Weekly patterns
       if (day === "Sat") {
         trafficMultiplier = 1.3
         salesMultiplier = 0.9
@@ -221,18 +211,15 @@ export default function AnalysisPage() {
     })
   }
 
-  // Initialize Chart.js charts
   const initializeCharts = async () => {
     if (typeof window === "undefined" || !realTimeData) return
 
-    // Dynamically import Chart.js
     const { Chart, registerables } = await import("chart.js")
     Chart.register(...registerables)
 
     const hourlyData = generateHourlyData()
     const weeklyData = generateWeeklyData()
 
-    // Destroy existing charts
     if (hourlyChartInstance.current) {
       hourlyChartInstance.current.destroy()
     }
@@ -240,7 +227,6 @@ export default function AnalysisPage() {
       weeklyChartInstance.current.destroy()
     }
 
-    // Hourly Traffic Chart
     if (hourlyChartRef.current) {
       const ctx = hourlyChartRef.current.getContext("2d")
       if (ctx) {
@@ -330,7 +316,6 @@ export default function AnalysisPage() {
       }
     }
 
-    // Weekly Trends Chart
     if (weeklyChartRef.current) {
       const ctx = weeklyChartRef.current.getContext("2d")
       if (ctx) {
@@ -415,18 +400,16 @@ export default function AnalysisPage() {
     }
   }
 
-  // Update charts when data changes
   useEffect(() => {
     if (realTimeData && !isLoading) {
       const timer = setTimeout(() => {
         initializeCharts()
-      }, 500) // Small delay to ensure DOM is ready
+      }, 500) 
 
       return () => clearTimeout(timer)
     }
   }, [realTimeData, isLoading])
 
-  // Cleanup charts on unmount
   useEffect(() => {
     return () => {
       if (hourlyChartInstance.current) {
@@ -438,7 +421,6 @@ export default function AnalysisPage() {
     }
   }, [])
 
-  // Confetti effect for high scores
   useEffect(() => {
     if (geoScore >= 72 && !isLoading) {
       setShowConfetti(true)
@@ -447,7 +429,6 @@ export default function AnalysisPage() {
     }
   }, [geoScore, isLoading])
 
-  // Business type mapping for competitor filtering
   const businessTypeMapping: Record<string, string[]> = {
     food_service: ["restaurant", "cafe", "bakery", "meal_takeaway", "food"],
     retail: ["store", "clothing_store", "shoe_store", "book_store", "electronics_store"],
@@ -460,12 +441,10 @@ export default function AnalysisPage() {
     education: ["school", "university", "library", "tutoring"],
   }
 
-  // Real-time data fetching - NO LOADING SCREEN
   const fetchRealTimeData = async () => {
     try {
       setError(null)
 
-      // Get location from localStorage
       let location = ""
       if (typeof window !== "undefined") {
         location = localStorage.getItem("selectedLocation") || ""
@@ -477,7 +456,6 @@ export default function AnalysisPage() {
 
       setSelectedLocation(location)
 
-      // Check if we have cached data
       const locationKey = locationKeyFromAddress(location)
       const existingData = getLocationData(locationKey)
 
@@ -500,7 +478,6 @@ export default function AnalysisPage() {
         })
         setNearbyPlaces(existingData.nearbyPlaces)
 
-        // Fetch transit data separately
         const transitResponse = await fetch(
           `/api/transit?lat=${existingData.coordinates.lat}&lng=${existingData.coordinates.lng}&radius=2000`,
         )
@@ -513,7 +490,6 @@ export default function AnalysisPage() {
         return
       }
 
-      // Geocode the location
       const geocodeResponse = await fetch(`/api/geocode?address=${encodeURIComponent(location)}`)
 
       if (!geocodeResponse.ok) {
@@ -532,7 +508,6 @@ export default function AnalysisPage() {
 
       setCoordinates({ lat, lng })
 
-      // Fetch places and transit data in parallel
       const [placesResponse, transitResponse] = await Promise.all([
         fetch(`/api/places?lat=${lat}&lng=${lng}&radius=2000&type=establishment`),
         fetch(`/api/transit?lat=${lat}&lng=${lng}&radius=2000`),
@@ -551,11 +526,10 @@ export default function AnalysisPage() {
         setTransitStations(transitData.results || [])
       }
 
-      // Generate analysis based on actual location data - NOW PASSING TRANSIT STATIONS
       const analysisResult = generateConsistentScore(
         { lat, lng },
         placesData.results || [],
-        transitData.results || [], // Pass transit stations to scoring function
+        transitData.results || [], 
         false,
       )
 
@@ -577,7 +551,6 @@ export default function AnalysisPage() {
 
       setRealTimeData(newData)
 
-      // Store the data for future use
       const locationData = {
         location: actualAddress,
         coordinates: { lat, lng },
@@ -609,7 +582,6 @@ export default function AnalysisPage() {
     fetchRealTimeData()
   }, [])
 
-  // Check if business type is set, if not show selector
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedBusinessType = localStorage.getItem("businessType")
@@ -631,7 +603,6 @@ export default function AnalysisPage() {
     }
   }
 
-  // Filter competitors based on business type
   const relevantCompetitors =
     businessType && businessTypeMapping[businessType]
       ? nearbyPlaces.filter((place) => place.types?.some((t: string) => businessTypeMapping[businessType].includes(t)))
@@ -639,7 +610,6 @@ export default function AnalysisPage() {
           place.types?.some((t: string) => ["store", "restaurant", "shop", "establishment"].includes(t)),
         )
 
-  // Enhanced Earth Animation Background Component (same as home page)
   const EarthBackground = () => (
     <div className="absolute inset-0 overflow-hidden">
       {/* Main Earth Visualization */}
@@ -724,7 +694,6 @@ export default function AnalysisPage() {
     </div>
   )
 
-  // Confetti Animation Component
   const ConfettiAnimation = () => {
     if (!showConfetti) return null
 
@@ -756,7 +725,6 @@ export default function AnalysisPage() {
     )
   }
 
-  // Show error immediately without loading screen
   if (error || (coordinates === null && !isLoading)) {
     return (
       <div className="min-h-screen bg-slate-900 relative">
@@ -785,7 +753,6 @@ export default function AnalysisPage() {
     )
   }
 
-  // Show centered loading spinner
   if (isLoading || !realTimeData) {
     return (
       <div className="min-h-screen bg-slate-900 relative">
@@ -819,7 +786,6 @@ export default function AnalysisPage() {
         onSelect={handleBusinessTypeSelect}
       />
 
-      {/* Header with logo - same style as home page */}
       <header className="relative z-10 py-6 px-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
@@ -834,7 +800,6 @@ export default function AnalysisPage() {
           <div className="flex items-center space-x-4">
             <Button
               onClick={() => {
-                // Clear business type when going back to home
                 if (typeof window !== "undefined") {
                   localStorage.removeItem("businessType")
                   localStorage.removeItem("businessCategory")
@@ -914,7 +879,7 @@ export default function AnalysisPage() {
               </CardContent>
             </Card>
 
-            {/* Factor Scores Grid */}
+            {/* Factor Grid */}
             <div className="grid grid-cols-2 gap-4">
               {factors.map((factor, index) => (
                 <motion.div
