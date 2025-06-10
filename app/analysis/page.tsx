@@ -26,23 +26,11 @@ import {
   Info,
   Zap,
   Target,
-  DollarSign,
-  Building,
-  Car,
-  Wifi,
-  Coffee,
-  ShoppingCart,
-  Heart,
-  Camera,
-  Utensils,
-  GraduationCap,
-  Home,
-  TreePine,
-  Fuel,
-  Hospital,
-  Phone,
-  Briefcase,
-  Layers,
+  Map,
+  Layers3,
+  ThumbsUp,
+  AlertTriangle,
+  TrendingDown as RiskyIcon,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MapView } from "@/components/map-view"
@@ -66,10 +54,6 @@ interface NearbyPlace {
   icon: string
   rating?: number
   user_ratings_total?: number
-  price_level?: number
-  opening_hours?: {
-    open_now: boolean
-  }
   geometry: {
     location: {
       lat: number
@@ -78,35 +62,12 @@ interface NearbyPlace {
   }
 }
 
-interface RealLocationData {
-  demographics: {
-    averageIncome: number
-    populationDensity: number
-    ageGroups: Record<string, number>
-  }
-  businessMetrics: {
-    averageRent: number
-    businessDensity: number
-    successRate: number
-  }
-  infrastructure: {
-    internetSpeed: number
-    parkingAvailability: number
-    publicServices: number
-  }
-  realTimeFactors: {
-    currentTraffic: number
-    peakHours: string[]
-    busyTimes: Record<string, number>
-    popularityScore: number
-  }
-}
-
 export default function AnalysisPage() {
   const router = useRouter()
   const [selectedLocation, setSelectedLocation] = useState("")
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [geoScore, setGeoScore] = useState(0)
+  const [scoreAnimated, setScoreAnimated] = useState(false)
   const [activeLayer, setActiveLayer] = useState("footHeat")
   const [isLoading, setIsLoading] = useState(true)
   const [realTimeData, setRealTimeData] = useState<any>(null)
@@ -119,9 +80,7 @@ export default function AnalysisPage() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [animationActive, setAnimationActive] = useState(false)
   const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 })
-  const [realLocationData, setRealLocationData] = useState<RealLocationData | null>(null)
   const [is3DMode, setIs3DMode] = useState(false)
-  const [scoreAnimated, setScoreAnimated] = useState(false)
 
   const hourlyChartRef = useRef<HTMLCanvasElement>(null)
   const weeklyChartRef = useRef<HTMLCanvasElement>(null)
@@ -161,6 +120,16 @@ export default function AnalysisPage() {
     }
   }, [])
 
+  // Trigger score animation only once when score is set
+  useEffect(() => {
+    if (geoScore > 0 && !scoreAnimated && !isLoading) {
+      const timer = setTimeout(() => {
+        setScoreAnimated(true)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [geoScore, scoreAnimated, isLoading])
+
   const factors = realTimeData
     ? [
         {
@@ -168,7 +137,7 @@ export default function AnalysisPage() {
           name: "Foot Traffic",
           score: realTimeData.footTraffic || 0,
           icon: Users,
-          color: "from-emerald-400 to-green-300",
+          color: "from-emerald-500 to-green-400",
           description: "Pedestrian flow and activity levels",
           trend: realTimeData.footTraffic > 70 ? "up" : realTimeData.footTraffic > 50 ? "stable" : "down"
         },
@@ -177,7 +146,7 @@ export default function AnalysisPage() {
           name: "Safety",
           score: realTimeData.safety || 0,
           icon: Shield,
-          color: "from-blue-400 to-cyan-300",
+          color: "from-blue-500 to-cyan-400",
           description: "Security and safety assessment",
           trend: realTimeData.safety > 70 ? "up" : realTimeData.safety > 50 ? "stable" : "down"
         },
@@ -186,7 +155,7 @@ export default function AnalysisPage() {
           name: "Competition",
           score: realTimeData.competition || 0,
           icon: TrendingUp,
-          color: "from-orange-400 to-yellow-300",
+          color: "from-orange-500 to-yellow-400",
           description: "Market competition analysis",
           trend: realTimeData.competition > 70 ? "up" : realTimeData.competition > 50 ? "stable" : "down"
         },
@@ -195,102 +164,12 @@ export default function AnalysisPage() {
           name: "Accessibility",
           score: realTimeData.accessibility || 0,
           icon: Bus,
-          color: "from-purple-400 to-pink-300",
+          color: "from-purple-500 to-pink-400",
           description: "Transit and accessibility features",
           trend: realTimeData.accessibility > 70 ? "up" : realTimeData.accessibility > 50 ? "stable" : "down"
         },
       ]
     : []
-
-  // Fetch real data from Google Maps APIs
-  const fetchRealLocationData = async (places: NearbyPlace[], coords: { lat: number; lng: number }): Promise<RealLocationData> => {
-    try {
-      // Get place details for enhanced data
-      const detailedPlaces = await Promise.all(
-        places.slice(0, 10).map(async (place) => {
-          try {
-            const response = await fetch(`/api/place-details?place_id=${place.place_id}`)
-            if (response.ok) {
-              const details = await response.json()
-              return details.result
-            }
-          } catch (error) {
-            console.error("Error fetching place details:", error)
-          }
-          return place
-        })
-      )
-
-      // Calculate real metrics based on actual Google Maps data
-      const restaurants = places.filter(p => p.types?.includes("restaurant"))
-      const stores = places.filter(p => p.types?.includes("store"))
-      const banks = places.filter(p => p.types?.includes("bank"))
-      const schools = places.filter(p => p.types?.includes("school"))
-      const hospitals = places.filter(p => p.types?.includes("hospital"))
-      const gasStations = places.filter(p => p.types?.includes("gas_station"))
-      
-      // Calculate average rating and price level from real data
-      const ratedPlaces = places.filter(p => p.rating && p.rating > 0)
-      const avgRating = ratedPlaces.length > 0 ? ratedPlaces.reduce((sum, p) => sum + (p.rating || 0), 0) / ratedPlaces.length : 3.5
-      
-      const pricedPlaces = places.filter(p => p.price_level !== undefined && p.price_level > 0)
-      const avgPriceLevel = pricedPlaces.length > 0 ? pricedPlaces.reduce((sum, p) => sum + (p.price_level || 0), 0) / pricedPlaces.length : 2
-
-      // Get current traffic data (simulated based on time of day)
-      const currentHour = new Date().getHours()
-      let currentTraffic = 50
-      if (currentHour >= 7 && currentHour <= 9) currentTraffic = 85 // Morning rush
-      else if (currentHour >= 12 && currentHour <= 14) currentTraffic = 75 // Lunch
-      else if (currentHour >= 17 && currentHour <= 19) currentTraffic = 90 // Evening rush
-      else if (currentHour >= 20 && currentHour <= 22) currentTraffic = 70 // Evening activity
-
-      return {
-        demographics: {
-          averageIncome: Math.round(30000 + (avgRating * 12000) + (avgPriceLevel * 8000) + (banks.length * 5000)),
-          populationDensity: Math.round(800 + (places.length * 40) + (restaurants.length * 20)),
-          ageGroups: {
-            "18-25": 18 + Math.round(restaurants.length * 0.5),
-            "26-35": 28 + Math.round(stores.length * 0.3),
-            "36-50": 32 + Math.round(schools.length * 2),
-            "51+": 22 + Math.round(hospitals.length * 1.5),
-          }
-        },
-        businessMetrics: {
-          averageRent: Math.round(1500 + (avgPriceLevel * 1200) + (places.length * 80) + (banks.length * 200)),
-          businessDensity: Math.round((stores.length + restaurants.length) / 20 * 100),
-          successRate: Math.round(55 + (avgRating * 10) + (banks.length * 3) + Math.min(15, places.length * 0.5))
-        },
-        infrastructure: {
-          internetSpeed: Math.round(40 + (places.length * 1.5) + (banks.length * 8) + (stores.length * 2)),
-          parkingAvailability: Math.round(75 - (places.length * 0.3) + (gasStations.length * 8)),
-          publicServices: hospitals.length + schools.length + banks.length
-        },
-        realTimeFactors: {
-          currentTraffic,
-          peakHours: ["8:00-9:00", "12:00-14:00", "17:00-19:00"],
-          busyTimes: {
-            "Monday": 75,
-            "Tuesday": 80,
-            "Wednesday": 85,
-            "Thursday": 82,
-            "Friday": 90,
-            "Saturday": 95,
-            "Sunday": 65
-          },
-          popularityScore: Math.round(avgRating * 20)
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching real location data:", error)
-      // Return fallback data
-      return {
-        demographics: { averageIncome: 45000, populationDensity: 1200, ageGroups: { "18-25": 25, "26-35": 30, "36-50": 30, "51+": 15 } },
-        businessMetrics: { averageRent: 2500, businessDensity: 65, successRate: 72 },
-        infrastructure: { internetSpeed: 75, parkingAvailability: 60, publicServices: 5 },
-        realTimeFactors: { currentTraffic: 65, peakHours: ["8:00-9:00", "17:00-19:00"], busyTimes: {}, popularityScore: 70 }
-      }
-    }
-  }
 
   const generateHourlyData = () => {
     const baseTraffic = realTimeData?.footTraffic || 75
@@ -572,12 +451,12 @@ export default function AnalysisPage() {
   }, [])
 
   useEffect(() => {
-    if (geoScore >= 75 && !isLoading && !scoreAnimated) {
+    if (geoScore >= 75 && !isLoading) {
       setShowConfetti(true)
       const timer = setTimeout(() => setShowConfetti(false), 3000)
       return () => clearTimeout(timer)
     }
-  }, [geoScore, isLoading, scoreAnimated])
+  }, [geoScore, isLoading])
 
   const businessTypeMapping: Record<string, string[]> = {
     food_service: ["restaurant", "cafe", "bakery", "meal_takeaway", "food"],
@@ -628,10 +507,6 @@ export default function AnalysisPage() {
         })
         setNearbyPlaces(existingData.nearbyPlaces)
 
-        // Fetch real location data
-        const realData = await fetchRealLocationData(existingData.nearbyPlaces, existingData.coordinates)
-        setRealLocationData(realData)
-
         const transitResponse = await fetch(
           `/api/transit?lat=${existingData.coordinates.lat}&lng=${existingData.coordinates.lng}&radius=2000`,
         )
@@ -641,7 +516,6 @@ export default function AnalysisPage() {
         }
 
         setIsLoading(false)
-        setScoreAnimated(true)
         return
       }
 
@@ -681,10 +555,6 @@ export default function AnalysisPage() {
         setTransitStations(transitData.results || [])
       }
 
-      // Fetch real location data
-      const realData = await fetchRealLocationData(placesData.results || [], { lat, lng })
-      setRealLocationData(realData)
-
       const analysisResult = generateConsistentScore(
         { lat, lng },
         placesData.results || [],
@@ -722,7 +592,6 @@ export default function AnalysisPage() {
       }
 
       storeLocationData(locationKey, locationData)
-      setScoreAnimated(true)
     } catch (error) {
       console.error("Error fetching real-time data:", error)
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
@@ -763,6 +632,12 @@ export default function AnalysisPage() {
     }
   }
 
+  // Handle layer change without reloading score
+  const handleLayerChange = (layer: string) => {
+    setActiveLayer(layer)
+    // Don't reload the score or data
+  }
+
   const relevantCompetitors =
     businessType && businessTypeMapping[businessType]
       ? nearbyPlaces.filter((place) => place.types?.some((t: string) => businessTypeMapping[businessType].includes(t)))
@@ -770,13 +645,48 @@ export default function AnalysisPage() {
           place.types?.some((t: string) => ["store", "restaurant", "shop", "establishment"].includes(t)),
         )
 
+  // Get suggestion based on score
+  const getSuggestion = (score: number) => {
+    if (score >= 75) {
+      return {
+        type: "good",
+        icon: ThumbsUp,
+        color: "text-green-400",
+        bgColor: "bg-green-500/20",
+        borderColor: "border-green-500/30",
+        title: "Excellent Location",
+        message: "This location shows strong potential for business success with high scores across key metrics."
+      }
+    } else if (score >= 50) {
+      return {
+        type: "average",
+        icon: AlertTriangle,
+        color: "text-yellow-400",
+        bgColor: "bg-yellow-500/20",
+        borderColor: "border-yellow-500/30",
+        title: "Average Location",
+        message: "This location has moderate potential. Consider improvements in lower-scoring areas."
+      }
+    } else {
+      return {
+        type: "risky",
+        icon: RiskyIcon,
+        color: "text-red-400",
+        bgColor: "bg-red-500/20",
+        borderColor: "border-red-500/30",
+        title: "Risky Location",
+        message: "This location may face challenges. Careful planning and strategy will be essential."
+      }
+    }
+  }
+
   const EarthBackground = () => (
     <div className="absolute inset-0 overflow-hidden">
       {/* Main Earth Visualization */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{
-          opacity: animationActive ? 0.03 : 0,
+          opacity: animationActive ? 0.06 : 0,
           scale: animationActive ? 1 : 0.8,
           rotate: animationActive ? 360 : 0,
         }}
@@ -790,12 +700,42 @@ export default function AnalysisPage() {
         <ThreeDVisualization type="hero" className="w-full h-full" />
       </motion.div>
 
-      {/* Floating particles */}
-      {Array.from({ length: 20 }).map((_, i) => (
+      {/* Glowing Orbs */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <motion.div
+          key={`orb-${i}`}
+          className={`absolute w-32 h-32 rounded-full bg-gradient-to-r ${
+            i % 2 === 0 ? "from-blue-500/5 to-cyan-500/3" : "from-purple-500/5 to-pink-500/3"
+          }`}
+          initial={{
+            x: Math.random() * windowSize.width,
+            y: Math.random() * windowSize.height,
+            scale: 0,
+          }}
+          animate={{
+            x: [Math.random() * windowSize.width, Math.random() * windowSize.width, Math.random() * windowSize.width],
+            y: [
+              Math.random() * windowSize.height,
+              Math.random() * windowSize.height,
+              Math.random() * windowSize.height,
+            ],
+            scale: animationActive ? [0, 1, 0.5, 1, 0] : 0,
+          }}
+          transition={{
+            duration: 20 + Math.random() * 10,
+            times: [0, 0.2, 0.5, 0.8, 1],
+            repeat: Number.POSITIVE_INFINITY,
+            delay: i * 2,
+          }}
+        />
+      ))}
+
+      {/* Floating particles with trails */}
+      {Array.from({ length: 15 }).map((_, i) => (
         <motion.div
           key={`particle-${i}`}
           className={`absolute w-1 h-1 rounded-full ${
-            i % 3 === 0 ? "bg-blue-400/30" : i % 3 === 1 ? "bg-cyan-400/30" : "bg-purple-400/30"
+            i % 3 === 0 ? "bg-blue-400/50" : i % 3 === 1 ? "bg-cyan-400/50" : "bg-purple-400/50"
           }`}
           initial={{
             x: Math.random() * windowSize.width,
@@ -810,7 +750,7 @@ export default function AnalysisPage() {
               Math.random() * windowSize.height,
               Math.random() * windowSize.height,
             ],
-            opacity: animationActive ? [0, 0.5, 0] : 0,
+            opacity: animationActive ? [0, 0.7, 0] : 0,
             scale: animationActive ? [0, 1, 0] : 0,
           }}
           transition={{
@@ -855,71 +795,12 @@ export default function AnalysisPage() {
     )
   }
 
-  // Circular progress component with fixed animation
-  const CircularProgress = ({ score, size = 200 }: { score: number; size?: number }) => {
-    const radius = (size - 20) / 2
-    const circumference = 2 * Math.PI * radius
-    const strokeDasharray = circumference
-    const strokeDashoffset = circumference - (score / 100) * circumference
-
-    const getScoreColor = (score: number) => {
-      if (score >= 75) return "#10b981"
-      if (score >= 60) return "#f59e0b"
-      return "#ef4444"
-    }
-
-    const getScoreBg = (score: number) => {
-      if (score >= 75) return "from-emerald-500/20 to-green-500/10"
-      if (score >= 60) return "from-yellow-500/20 to-orange-500/10"
-      return "from-red-500/20 to-pink-500/10"
-    }
-
-    return (
-      <div className={`relative flex items-center justify-center bg-gradient-to-br ${getScoreBg(score)} backdrop-blur-xl rounded-full border border-white/20`} style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="transform -rotate-90">
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke="rgba(255, 255, 255, 0.1)"
-            strokeWidth="8"
-            fill="none"
-          />
-          <motion.circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke={getScoreColor(score)}
-            strokeWidth="8"
-            fill="none"
-            strokeDasharray={strokeDasharray}
-            strokeLinecap="round"
-            initial={{ strokeDashoffset: circumference }}
-            animate={{ strokeDashoffset: strokeDashoffset }}
-            transition={{ duration: 2, ease: "easeOut", delay: 0.5 }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 1, type: "spring", stiffness: 200 }}
-            className="text-5xl font-bold text-white mb-1"
-          >
-            {score}
-          </motion.div>
-          <div className="text-white/80 text-sm font-medium">GeoScore</div>
-        </div>
-      </div>
-    )
-  }
-
   if (error || (coordinates === null && !isLoading)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
+      <div className="min-h-screen bg-slate-900 relative">
         <EarthBackground />
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="text-center p-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 max-w-md">
+          <div className="text-center p-8 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 max-w-md">
             <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
             <h2 className="text-white text-2xl font-bold mb-4">Analysis Failed</h2>
             <p className="text-red-200 mb-6">{error || "Unable to analyze the selected location."}</p>
@@ -944,7 +825,7 @@ export default function AnalysisPage() {
 
   if (isLoading || !realTimeData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
+      <div className="min-h-screen bg-slate-900 relative">
         <EarthBackground />
         <div className="relative z-10 min-h-screen flex items-center justify-center">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
@@ -960,8 +841,10 @@ export default function AnalysisPage() {
     )
   }
 
+  const suggestion = getSuggestion(geoScore)
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
+    <div className="min-h-screen bg-slate-900 relative">
       {/* Earth Animation Background */}
       <EarthBackground />
 
@@ -983,17 +866,25 @@ export default function AnalysisPage() {
             </div>
             <div className="ml-4">
               <h1 className="text-3xl font-bold text-white">GeoScope Credit</h1>
-              <p className="text-blue-300">Real-Time Location Intelligence</p>
+              <p className="text-blue-300">Location Intelligence Report</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
             <Button
               onClick={() => setIs3DMode(!is3DMode)}
               variant="outline"
-              className="border-purple-600 text-purple-300 hover:bg-purple-900/30 backdrop-blur-xl bg-white/5"
+              className={`border-purple-600 text-purple-300 hover:bg-purple-900/30 ${is3DMode ? 'bg-purple-900/50' : ''}`}
             >
-              <Layers className="w-4 h-4 mr-2" />
-              {is3DMode ? "2D Map" : "3D Map"}
+              {is3DMode ? <Map className="w-4 h-4 mr-2" /> : <Layers3 className="w-4 h-4 mr-2" />}
+              {is3DMode ? '2D Map' : '3D Map'}
+            </Button>
+            <Button
+              onClick={() => router.push("/docs")}
+              variant="outline"
+              className="border-blue-600 text-blue-300 hover:bg-blue-900/30"
+            >
+              <Info className="w-4 h-4 mr-2" />
+              Documentation
             </Button>
             <Button
               onClick={() => {
@@ -1004,7 +895,7 @@ export default function AnalysisPage() {
                 router.push("/")
               }}
               variant="outline"
-              className="border-cyan-600 text-cyan-300 hover:bg-cyan-900/30 backdrop-blur-xl bg-white/5"
+              className="border-cyan-600 text-cyan-300 hover:bg-cyan-900/30"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               New Analysis
@@ -1012,7 +903,7 @@ export default function AnalysisPage() {
             <Button
               variant="outline"
               size="sm"
-              className="border-green-600 text-green-300 hover:bg-green-900/30 backdrop-blur-xl bg-white/5"
+              className="border-green-600 text-green-300 hover:bg-green-900/30"
               onClick={() => window.print()}
             >
               Export Report
@@ -1023,13 +914,13 @@ export default function AnalysisPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-8 py-12 relative z-10">
-        {/* Hero Section with Circular Score */}
-        <div className="flex flex-col xl:flex-row items-start justify-between mb-16 gap-12">
+        {/* Hero Section with Enhanced Score Display */}
+        <div className="flex flex-col lg:flex-row items-start justify-between mb-16 gap-12">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.8 }}
-            className="xl:w-1/2"
+            className="lg:w-1/2"
           >
             {/* Location Header */}
             <div className="mb-8">
@@ -1040,18 +931,18 @@ export default function AnalysisPage() {
               <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 leading-tight">{selectedLocation}</h3>
               
               {/* Status Badges */}
-              <div className="flex flex-wrap items-center gap-3 mb-8">
-                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-4 py-2 border border-white/10">
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-green-400 text-sm font-medium">Live Analysis</span>
+                  <span className="text-green-400 text-sm font-medium">Google Maps Data</span>
                 </div>
                 {businessCategory && (
-                  <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-4 py-2 border border-white/10">
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
                     <Store className="w-4 h-4 text-purple-400" />
                     <span className="text-purple-400 text-sm font-medium">{businessCategory}</span>
                   </div>
                 )}
-                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-4 py-2 border border-white/10">
+                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
                   <Globe className="w-4 h-4 text-blue-400" />
                   <span className="text-blue-400 text-sm font-medium">
                     {coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)}
@@ -1060,10 +951,75 @@ export default function AnalysisPage() {
               </div>
             </div>
 
-            {/* Circular Score Display */}
-            <div className="flex justify-center mb-8">
-              <CircularProgress score={geoScore} size={240} />
-            </div>
+            {/* Enhanced Circular Score Display */}
+            <Card className={`bg-white/5 backdrop-blur-xl border border-white/20 relative overflow-hidden mb-8`}>
+              <CardContent className="p-8">
+                <div className="text-center">
+                  <div className="flex items-center justify-center space-x-3 mb-6">
+                    <Zap className="w-8 h-8 text-cyan-400" />
+                    <h4 className="text-2xl font-bold text-white">GeoScope Score</h4>
+                  </div>
+                  
+                  {/* Circular Score with SVG Animation */}
+                  <div className="relative w-48 h-48 mx-auto mb-6">
+                    <svg className="w-48 h-48 transform -rotate-90" viewBox="0 0 100 100">
+                      {/* Background circle */}
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke="rgba(255,255,255,0.1)"
+                        strokeWidth="8"
+                        fill="none"
+                      />
+                      {/* Progress circle */}
+                      <motion.circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke={geoScore >= 75 ? "#10b981" : geoScore >= 50 ? "#f59e0b" : "#ef4444"}
+                        strokeWidth="8"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 40}`}
+                        initial={{ strokeDashoffset: 2 * Math.PI * 40 }}
+                        animate={scoreAnimated ? { 
+                          strokeDashoffset: 2 * Math.PI * 40 * (1 - geoScore / 100) 
+                        } : {}}
+                        transition={{ duration: 2, ease: "easeOut" }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={scoreAnimated ? { scale: 1 } : {}}
+                        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                        className={`text-6xl font-bold ${colorFor(geoScore)}`}
+                      >
+                        {scoreAnimated ? geoScore : 0}
+                      </motion.div>
+                    </div>
+                  </div>
+                  
+                  <Badge variant="outline" className={`${colorFor(geoScore)} border-current text-lg px-4 py-2 mb-4`}>
+                    {labelFor(geoScore)}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Suggestion Card */}
+            <Card className={`${suggestion.bgColor} backdrop-blur-xl border ${suggestion.borderColor} mb-8`}>
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-4">
+                  <suggestion.icon className={`w-8 h-8 ${suggestion.color} flex-shrink-0 mt-1`} />
+                  <div>
+                    <h4 className={`text-lg font-bold ${suggestion.color} mb-2`}>{suggestion.title}</h4>
+                    <p className="text-white/80 text-sm">{suggestion.message}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Enhanced Factor Grid */}
             <div className="grid grid-cols-2 gap-4">
@@ -1073,29 +1029,22 @@ export default function AnalysisPage() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.6 + index * 0.1 }}
-                  className={`bg-white/5 backdrop-blur-xl p-6 rounded-2xl text-white cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-white/10 border border-white/10 relative overflow-hidden group`}
-                  onClick={() => setActiveLayer(factor.id)}
+                  className={`bg-gradient-to-br ${factor.color} p-6 rounded-2xl text-white cursor-pointer transition-all duration-300 hover:scale-105 shadow-lg relative overflow-hidden`}
+                  onClick={() => handleLayerChange(factor.id)}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <factor.icon className="w-8 h-8 text-white/80" />
-                    {factor.trend === "up" && <TrendingUp className="w-5 h-5 text-green-400" />}
-                    {factor.trend === "down" && <TrendingDown className="w-5 h-5 text-red-400" />}
-                    {factor.trend === "stable" && <CheckCircle className="w-5 h-5 text-blue-400" />}
+                    <factor.icon className="w-8 h-8" />
+                    {factor.trend === "up" && <TrendingUp className="w-5 h-5 text-green-200" />}
+                    {factor.trend === "down" && <TrendingDown className="w-5 h-5 text-red-200" />}
+                    {factor.trend === "stable" && <CheckCircle className="w-5 h-5 text-blue-200" />}
                   </div>
-                  <div className="text-3xl font-bold mb-1 text-white">{factor.score}</div>
-                  <div className="text-sm text-white/70 mb-3">{factor.name}</div>
-                  <div className="w-full bg-white/10 rounded-full h-2">
-                    <motion.div 
-                      className={`h-2 rounded-full bg-gradient-to-r ${factor.color}`}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${factor.score}%` }}
-                      transition={{ duration: 1.5, delay: 0.8 + index * 0.1 }}
-                    ></motion.div>
-                  </div>
+                  <div className="text-3xl font-bold mb-1">{factor.score}</div>
+                  <div className="text-sm opacity-90 mb-2">{factor.name}</div>
+                  <Progress value={factor.score} className="h-2 bg-white/20" />
                   
                   {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <span className="text-sm font-medium text-white">View on Map</span>
+                  <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="text-sm font-medium">View on Map</span>
                   </div>
                 </motion.div>
               ))}
@@ -1107,9 +1056,9 @@ export default function AnalysisPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="xl:w-1/2 h-[700px] w-full"
+            className="lg:w-1/2 h-[700px]"
           >
-            <Card className="bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl h-full overflow-hidden">
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg h-full">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-white flex items-center space-x-2">
@@ -1117,91 +1066,99 @@ export default function AnalysisPage() {
                     <span>Interactive Analysis Map</span>
                   </CardTitle>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="border-cyan-400 text-cyan-400 bg-cyan-400/10">
+                    <Badge variant="outline" className="border-cyan-400 text-cyan-400">
                       2km Radius
                     </Badge>
-                    <Badge variant="outline" className="border-purple-400 text-purple-400 bg-purple-400/10">
+                    <Badge variant="outline" className="border-purple-400 text-purple-400">
                       {transitStations.length} Transit
                     </Badge>
-                    <Badge variant="outline" className="border-orange-400 text-orange-400 bg-orange-400/10">
+                    <Badge variant="outline" className="border-orange-400 text-orange-400">
                       {relevantCompetitors.length} Competitors
                     </Badge>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="p-6 h-full">
-                <div className="h-full rounded-xl overflow-hidden">
-                  <MapView
-                    coordinates={coordinates}
-                    selectedLocation={selectedLocation}
-                    nearbyPlaces={nearbyPlaces}
-                    transitStations={transitStations}
-                    activeLayer={activeLayer}
-                    factors={factors}
-                    onLayerChange={setActiveLayer}
-                    is3DMode={is3DMode}
-                  />
-                </div>
+                <MapView
+                  coordinates={coordinates}
+                  selectedLocation={selectedLocation}
+                  nearbyPlaces={nearbyPlaces}
+                  transitStations={transitStations}
+                  activeLayer={activeLayer}
+                  factors={factors}
+                  onLayerChange={handleLayerChange}
+                  is3DMode={is3DMode}
+                />
               </CardContent>
             </Card>
           </motion.div>
         </div>
 
-        {/* Real-Time Data Section */}
-        {realLocationData && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className="mb-16"
-          >
-            <Card className="bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center space-x-2">
-                  <BarChart3 className="w-5 h-5 text-cyan-400" />
-                  <span>Real-Time Location Intelligence</span>
-                  <Badge variant="outline" className="border-green-400 text-green-400 bg-green-400/10 ml-auto">
-                    Google Maps Data
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
-                  <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                    <DollarSign className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                    <div className="text-white font-bold text-xl">${realLocationData.demographics.averageIncome.toLocaleString()}</div>
-                    <div className="text-white/60 text-xs">Avg Income</div>
-                  </div>
-                  <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                    <Users className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-                    <div className="text-white font-bold text-xl">{realLocationData.demographics.populationDensity.toLocaleString()}</div>
-                    <div className="text-white/60 text-xs">Pop/km²</div>
-                  </div>
-                  <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                    <Building className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                    <div className="text-white font-bold text-xl">${realLocationData.businessMetrics.averageRent.toLocaleString()}</div>
-                    <div className="text-white/60 text-xs">Avg Rent</div>
-                  </div>
-                  <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                    <TrendingUp className="w-8 h-8 text-orange-400 mx-auto mb-2" />
-                    <div className="text-white font-bold text-xl">{realLocationData.businessMetrics.successRate}%</div>
-                    <div className="text-white/60 text-xs">Success Rate</div>
-                  </div>
-                  <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                    <Wifi className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
-                    <div className="text-white font-bold text-xl">{realLocationData.infrastructure.internetSpeed}</div>
-                    <div className="text-white/60 text-xs">Mbps</div>
-                  </div>
-                  <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                    <Car className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
-                    <div className="text-white font-bold text-xl">{realLocationData.infrastructure.parkingAvailability}%</div>
-                    <div className="text-white/60 text-xs">Parking</div>
-                  </div>
+        {/* Enhanced Quick Stats Overview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="mb-16"
+        >
+          <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center space-x-2">
+                <BarChart3 className="w-5 h-5 text-cyan-400" />
+                <span>Location Intelligence Overview</span>
+                <Badge variant="outline" className="border-green-400 text-green-400 ml-auto">
+                  Real-time Data
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
+                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                  <Store className="w-8 h-8 text-orange-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-2xl">{relevantCompetitors.length}</div>
+                  <div className="text-cyan-300 text-sm">Competitors</div>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                  <Train className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-2xl">{transitStations.length}</div>
+                  <div className="text-cyan-300 text-sm">Transit</div>
+                </div>
+                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                  <Users className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-2xl">{realTimeData?.footTraffic || 0}</div>
+                  <div className="text-cyan-300 text-sm">Traffic Score</div>
+                </div>
+                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                  <Shield className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-2xl">{realTimeData?.safety || 0}</div>
+                  <div className="text-cyan-300 text-sm">Safety Score</div>
+                </div>
+                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                  <TrendingUp className="w-8 h-8 text-orange-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-2xl">{realTimeData?.competition || 0}</div>
+                  <div className="text-cyan-300 text-sm">Competition</div>
+                </div>
+                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                  <Bus className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-2xl">{realTimeData?.accessibility || 0}</div>
+                  <div className="text-cyan-300 text-sm">Accessibility</div>
+                </div>
+                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                  <Activity className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-2xl">{nearbyPlaces.length}</div>
+                  <div className="text-cyan-300 text-sm">Total Places</div>
+                </div>
+                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                  <Star className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-2xl">
+                    {Math.round((realTimeData?.footTraffic + realTimeData?.safety + realTimeData?.competition + realTimeData?.accessibility) / 4) || 0}
+                  </div>
+                  <div className="text-cyan-300 text-sm">Avg Score</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Enhanced Charts Section */}
         <motion.div
@@ -1211,12 +1168,12 @@ export default function AnalysisPage() {
           className="grid lg:grid-cols-2 gap-8 mb-16"
         >
           {/* 24-Hour Traffic Pattern */}
-          <Card className="bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl">
+          <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
             <CardHeader>
               <CardTitle className="text-white flex items-center space-x-2">
                 <Clock className="w-5 h-5 text-cyan-400" />
                 <span>24-Hour Traffic Pattern</span>
-                <Badge variant="outline" className="border-green-400 text-green-400 bg-green-400/10 text-xs">
+                <Badge variant="outline" className="border-green-400 text-green-400 text-xs">
                   Live Data
                 </Badge>
               </CardTitle>
@@ -1229,12 +1186,12 @@ export default function AnalysisPage() {
           </Card>
 
           {/* Weekly Trends */}
-          <Card className="bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl">
+          <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
             <CardHeader>
               <CardTitle className="text-white flex items-center space-x-2">
                 <TrendingUp className="w-5 h-5 text-green-400" />
                 <span>Weekly Performance Trends</span>
-                <Badge variant="outline" className="border-green-400 text-green-400 bg-green-400/10 text-xs">
+                <Badge variant="outline" className="border-green-400 text-green-400 text-xs">
                   Predictive
                 </Badge>
               </CardTitle>
@@ -1255,20 +1212,20 @@ export default function AnalysisPage() {
             transition={{ delay: 1.4 }}
             className="mb-16"
           >
-            <Card className="bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl">
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-white flex items-center space-x-2">
                   <Store className="w-5 h-5 text-orange-400" />
                   <span>{businessCategory} Market Analysis</span>
-                  <Badge variant="outline" className="border-orange-400 text-orange-400 bg-orange-400/10">
+                  <Badge variant="outline" className="border-orange-400 text-orange-400">
                     {relevantCompetitors.length} Competitors
                   </Badge>
                   <Badge variant="outline" className={`ml-2 ${
                     realTimeData?.detailedAnalysis?.competitorAnalysis?.marketSaturation === "Saturated" 
-                      ? "border-red-400 text-red-400 bg-red-400/10"
+                      ? "border-red-400 text-red-400"
                       : realTimeData?.detailedAnalysis?.competitorAnalysis?.marketSaturation === "Competitive"
-                      ? "border-yellow-400 text-yellow-400 bg-yellow-400/10"
-                      : "border-green-400 text-green-400 bg-green-400/10"
+                      ? "border-yellow-400 text-yellow-400"
+                      : "border-green-400 text-green-400"
                   }`}>
                     {realTimeData?.detailedAnalysis?.competitorAnalysis?.marketSaturation || "Unknown"} Market
                   </Badge>
@@ -1293,31 +1250,20 @@ export default function AnalysisPage() {
                           </div>
                         )}
                       </div>
-                      <p className="text-white/60 text-xs mb-3 line-clamp-2">{competitor.vicinity}</p>
+                      <p className="text-cyan-200 text-xs mb-3 line-clamp-2">{competitor.vicinity}</p>
                       <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-xs border-orange-400 text-orange-400 bg-orange-400/10">
+                        <Badge variant="outline" className="text-xs border-orange-400 text-orange-400">
                           {competitor.types?.[0]?.replace(/_/g, ' ') || 'Business'}
                         </Badge>
-                        <span className="text-xs text-white/60">{competitor.user_ratings_total || 0} reviews</span>
+                        <span className="text-xs text-cyan-300">{competitor.user_ratings_total || 0} reviews</span>
                       </div>
-                      {competitor.opening_hours && (
-                        <div className="mt-2">
-                          <Badge variant="outline" className={`text-xs ${
-                            competitor.opening_hours.open_now 
-                              ? "border-green-400 text-green-400 bg-green-400/10" 
-                              : "border-red-400 text-red-400 bg-red-400/10"
-                          }`}>
-                            {competitor.opening_hours.open_now ? "Open Now" : "Closed"}
-                          </Badge>
-                        </div>
-                      )}
                     </motion.div>
                   ))}
                 </div>
                 
                 {relevantCompetitors.length > 6 && (
                   <div className="mt-6 text-center">
-                    <Badge variant="outline" className="border-orange-400 text-orange-400 bg-orange-400/10">
+                    <Badge variant="outline" className="border-orange-400 text-orange-400">
                       +{relevantCompetitors.length - 6} more competitors in the area
                     </Badge>
                   </div>
@@ -1332,7 +1278,7 @@ export default function AnalysisPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.8, duration: 0.8 }}
-          className="py-8 mt-16 border-t border-white/10"
+          className="py-8 mt-16 border-t border-white/20"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -1341,9 +1287,9 @@ export default function AnalysisPage() {
               </div>
               <div className="text-blue-300">Coded by Harman • Built in Canada</div>
             </div>
-            <div className="flex items-center space-x-4 text-sm text-white/60">
+            <div className="flex items-center space-x-4 text-sm text-slate-400">
               <span>Last updated: {new Date().toLocaleTimeString()}</span>
-              <Badge variant="outline" className="border-green-400 text-green-400 bg-green-400/10">
+              <Badge variant="outline" className="border-green-400 text-green-400">
                 <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
                 Live
               </Badge>
