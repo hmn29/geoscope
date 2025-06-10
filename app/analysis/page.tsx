@@ -7,6 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import {
   Users,
   Shield,
   Bus,
@@ -28,10 +34,9 @@ import {
   Target,
   ThumbsUp,
   AlertTriangle,
-  XCircle,
+  ThumbsDown,
+  Cube,
   Map as MapIcon,
-  Layers3,
-  Eye,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MapView } from "@/components/map-view"
@@ -88,6 +93,7 @@ export default function AnalysisPage() {
   const hourlyChartInstance = useRef<any>(null)
   const weeklyChartInstance = useRef<any>(null)
 
+  // Initialize window size and animation state on component mount
   useEffect(() => {
     const timer = setTimeout(() => {
       setAnimationActive(true)
@@ -121,6 +127,7 @@ export default function AnalysisPage() {
     }
   }, [])
 
+  // Define analysis factors with enhanced descriptions and trend indicators
   const factors = realTimeData
     ? [
         {
@@ -128,8 +135,8 @@ export default function AnalysisPage() {
           name: "Foot Traffic",
           score: realTimeData.footTraffic || 0,
           icon: Users,
-          color: "from-emerald-400 to-green-500",
-          description: "Pedestrian flow and activity levels",
+          color: "from-emerald-500 to-green-400",
+          description: "Pedestrian flow and activity levels throughout the day",
           trend: realTimeData.footTraffic > 70 ? "up" : realTimeData.footTraffic > 50 ? "stable" : "down"
         },
         {
@@ -137,8 +144,8 @@ export default function AnalysisPage() {
           name: "Safety",
           score: realTimeData.safety || 0,
           icon: Shield,
-          color: "from-blue-400 to-cyan-500",
-          description: "Security and safety assessment",
+          color: "from-blue-500 to-cyan-400",
+          description: "Security assessment based on crime data and safety infrastructure",
           trend: realTimeData.safety > 70 ? "up" : realTimeData.safety > 50 ? "stable" : "down"
         },
         {
@@ -146,8 +153,8 @@ export default function AnalysisPage() {
           name: "Competition",
           score: realTimeData.competition || 0,
           icon: TrendingUp,
-          color: "from-orange-400 to-yellow-500",
-          description: "Market competition analysis",
+          color: "from-orange-500 to-yellow-400",
+          description: "Market saturation and competitive landscape analysis",
           trend: realTimeData.competition > 70 ? "up" : realTimeData.competition > 50 ? "stable" : "down"
         },
         {
@@ -155,32 +162,36 @@ export default function AnalysisPage() {
           name: "Accessibility",
           score: realTimeData.accessibility || 0,
           icon: Bus,
-          color: "from-purple-400 to-pink-500",
-          description: "Transit and accessibility features",
+          color: "from-purple-500 to-pink-400",
+          description: "Public transport connectivity and ease of access",
           trend: realTimeData.accessibility > 70 ? "up" : realTimeData.accessibility > 50 ? "stable" : "down"
         },
       ]
     : []
 
+  // Generate realistic hourly traffic patterns based on location data
   const generateHourlyData = () => {
     const baseTraffic = realTimeData?.footTraffic || 75
     const baseSafety = realTimeData?.safety || 75
 
     return Array.from({ length: 24 }, (_, i) => {
       const hour = i
-      let trafficMultiplier = 0.3 
-      let safetyAdjustment = 0
+      let trafficMultiplier = 0.3 // Default low traffic for night hours
 
+      // Define traffic patterns based on typical business hours
       if (hour >= 6 && hour <= 9)
-        trafficMultiplier = 0.7 
+        trafficMultiplier = 0.7 // Morning rush
       else if (hour >= 10 && hour <= 16)
-        trafficMultiplier = 0.9 
+        trafficMultiplier = 0.9 // Business hours
       else if (hour >= 17 && hour <= 20)
-        trafficMultiplier = 1.0 
-      else if (hour >= 21 && hour <= 23) trafficMultiplier = 0.6 
+        trafficMultiplier = 1.0 // Evening peak
+      else if (hour >= 21 && hour <= 23) 
+        trafficMultiplier = 0.6 // Evening wind-down
 
-      if (hour >= 22 || hour <= 5) safetyAdjustment = -15
-      else if (hour >= 6 && hour <= 18) safetyAdjustment = 5
+      // Safety adjustments based on time of day
+      let safetyAdjustment = 0
+      if (hour >= 22 || hour <= 5) safetyAdjustment = -15 // Night hours less safe
+      else if (hour >= 6 && hour <= 18) safetyAdjustment = 5 // Daytime safer
 
       const pedestrians = Math.max(10, Math.round(baseTraffic * trafficMultiplier + Math.sin(hour * 0.5) * 8))
       const vehicles = Math.max(5, Math.round(baseTraffic * trafficMultiplier * 0.8 + Math.cos(hour * 0.3) * 6))
@@ -195,6 +206,7 @@ export default function AnalysisPage() {
     })
   }
 
+  // Generate weekly business performance trends
   const generateWeeklyData = () => {
     const baseTraffic = realTimeData?.footTraffic || 75
     const baseCompetition = realTimeData?.competition || 75
@@ -204,17 +216,18 @@ export default function AnalysisPage() {
       let trafficMultiplier = 1.0
       let salesMultiplier = 0.7
 
+      // Weekend and weekday patterns
       if (day === "Sat") {
-        trafficMultiplier = 1.3
+        trafficMultiplier = 1.3 // Saturday peak
         salesMultiplier = 0.9
       } else if (day === "Sun") {
-        trafficMultiplier = 0.8
+        trafficMultiplier = 0.8 // Sunday slower
         salesMultiplier = 0.6
       } else if (day === "Mon") {
-        trafficMultiplier = 0.85
+        trafficMultiplier = 0.85 // Monday startup
         salesMultiplier = 0.65
       } else if (day === "Fri") {
-        trafficMultiplier = 1.2
+        trafficMultiplier = 1.2 // Friday boost
         salesMultiplier = 0.85
       }
 
@@ -231,6 +244,7 @@ export default function AnalysisPage() {
     })
   }
 
+  // Initialize Chart.js charts for data visualization
   const initializeCharts = async () => {
     if (typeof window === "undefined" || !realTimeData) return
 
@@ -240,6 +254,7 @@ export default function AnalysisPage() {
     const hourlyData = generateHourlyData()
     const weeklyData = generateWeeklyData()
 
+    // Clean up existing chart instances
     if (hourlyChartInstance.current) {
       hourlyChartInstance.current.destroy()
     }
@@ -247,6 +262,7 @@ export default function AnalysisPage() {
       weeklyChartInstance.current.destroy()
     }
 
+    // Create hourly traffic pattern chart
     if (hourlyChartRef.current) {
       const ctx = hourlyChartRef.current.getContext("2d")
       if (ctx) {
@@ -336,6 +352,7 @@ export default function AnalysisPage() {
       }
     }
 
+    // Create weekly performance trends chart
     if (weeklyChartRef.current) {
       const ctx = weeklyChartRef.current.getContext("2d")
       if (ctx) {
@@ -420,6 +437,7 @@ export default function AnalysisPage() {
     }
   }
 
+  // Initialize charts when data is available
   useEffect(() => {
     if (realTimeData && !isLoading) {
       const timer = setTimeout(() => {
@@ -430,6 +448,7 @@ export default function AnalysisPage() {
     }
   }, [realTimeData, isLoading])
 
+  // Cleanup chart instances on component unmount
   useEffect(() => {
     return () => {
       if (hourlyChartInstance.current) {
@@ -441,6 +460,7 @@ export default function AnalysisPage() {
     }
   }, [])
 
+  // Trigger confetti animation for high scores
   useEffect(() => {
     if (geoScore >= 75 && !isLoading && !scoreAnimated) {
       setShowConfetti(true)
@@ -449,6 +469,7 @@ export default function AnalysisPage() {
     }
   }, [geoScore, isLoading, scoreAnimated])
 
+  // Business type mapping for competitor analysis
   const businessTypeMapping: Record<string, string[]> = {
     food_service: ["restaurant", "cafe", "bakery", "meal_takeaway", "food"],
     retail: ["store", "clothing_store", "shoe_store", "book_store", "electronics_store"],
@@ -461,6 +482,7 @@ export default function AnalysisPage() {
     education: ["school", "university", "library", "tutoring"],
   }
 
+  // Main data fetching function with comprehensive error handling
   const fetchRealTimeData = async () => {
     try {
       setError(null)
@@ -479,6 +501,7 @@ export default function AnalysisPage() {
       const locationKey = locationKeyFromAddress(location)
       const existingData = getLocationData(locationKey)
 
+      // Use cached data if available and not seeded
       if (existingData && !existingData.isSeeded) {
         setCoordinates(existingData.coordinates)
         setGeoScore(existingData.score)
@@ -498,6 +521,7 @@ export default function AnalysisPage() {
         })
         setNearbyPlaces(existingData.nearbyPlaces)
 
+        // Fetch transit data separately as it might not be cached
         const transitResponse = await fetch(
           `/api/transit?lat=${existingData.coordinates.lat}&lng=${existingData.coordinates.lng}&radius=2000`,
         )
@@ -510,6 +534,7 @@ export default function AnalysisPage() {
         return
       }
 
+      // Geocode the address to get precise coordinates
       const geocodeResponse = await fetch(`/api/geocode?address=${encodeURIComponent(location)}`)
 
       if (!geocodeResponse.ok) {
@@ -528,6 +553,7 @@ export default function AnalysisPage() {
 
       setCoordinates({ lat, lng })
 
+      // Fetch nearby places and transit data in parallel for better performance
       const [placesResponse, transitResponse] = await Promise.all([
         fetch(`/api/places?lat=${lat}&lng=${lng}&radius=2000&type=establishment`),
         fetch(`/api/transit?lat=${lat}&lng=${lng}&radius=2000`),
@@ -546,6 +572,7 @@ export default function AnalysisPage() {
         setTransitStations(transitData.results || [])
       }
 
+      // Generate comprehensive location analysis
       const analysisResult = generateConsistentScore(
         { lat, lng },
         placesData.results || [],
@@ -571,6 +598,7 @@ export default function AnalysisPage() {
 
       setRealTimeData(newData)
 
+      // Cache the analysis results for future use
       const locationData = {
         location: actualAddress,
         coordinates: { lat, lng },
@@ -588,6 +616,7 @@ export default function AnalysisPage() {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
       setError(errorMessage)
 
+      // Reset state on error
       setGeoScore(0)
       setRealTimeData(null)
       setNearbyPlaces([])
@@ -598,10 +627,12 @@ export default function AnalysisPage() {
     }
   }
 
+  // Fetch data on component mount
   useEffect(() => {
     fetchRealTimeData()
   }, [])
 
+  // Handle business type selection
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedBusinessType = localStorage.getItem("businessType")
@@ -623,11 +654,7 @@ export default function AnalysisPage() {
     }
   }
 
-  const handleLayerChange = (layer: string) => {
-    setActiveLayer(layer)
-    // Don't reload the score, just change the layer
-  }
-
+  // Filter competitors based on selected business type
   const relevantCompetitors =
     businessType && businessTypeMapping[businessType]
       ? nearbyPlaces.filter((place) => place.types?.some((t: string) => businessTypeMapping[businessType].includes(t)))
@@ -635,45 +662,48 @@ export default function AnalysisPage() {
           place.types?.some((t: string) => ["store", "restaurant", "shop", "establishment"].includes(t)),
         )
 
-  // Enhanced suggestions based on score
-  const getSuggestion = (score: number) => {
-    if (score >= 75) {
+  // Generate smart suggestions based on GeoScore
+  const getSmartSuggestions = () => {
+    if (geoScore >= 75) {
       return {
-        type: "good",
         icon: ThumbsUp,
         color: "text-green-400",
-        bgColor: "bg-green-900/20 border-green-500/30",
-        title: "Excellent Location!",
-        message: "This location shows strong potential for business success with high scores across all factors."
+        bgColor: "bg-green-900/20",
+        borderColor: "border-green-500/30",
+        title: "Excellent Location Choice",
+        message: "This location shows strong potential for business success with high foot traffic and good accessibility."
       }
-    } else if (score >= 50) {
+    } else if (geoScore >= 50) {
       return {
-        type: "average",
         icon: AlertTriangle,
         color: "text-yellow-400",
-        bgColor: "bg-yellow-900/20 border-yellow-500/30",
+        bgColor: "bg-yellow-900/20",
+        borderColor: "border-yellow-500/30",
         title: "Good Location with Room for Improvement",
         message: "Consider strategies to boost foot traffic or improve accessibility to maximize potential."
       }
     } else {
       return {
-        type: "risky",
-        icon: XCircle,
+        icon: ThumbsDown,
         color: "text-red-400",
-        bgColor: "bg-red-900/20 border-red-500/30",
+        bgColor: "bg-red-900/20",
+        borderColor: "border-red-500/30",
         title: "High Risk Location",
-        message: "This location may face challenges. Consider alternative locations or significant mitigation strategies."
+        message: "This location may face challenges. Consider alternative locations or significant marketing investment."
       }
     }
   }
 
+  const suggestions = getSmartSuggestions()
+
+  // Animated background with floating elements
   const EarthBackground = () => (
     <div className="absolute inset-0 overflow-hidden">
       {/* Main Earth Visualization */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{
-          opacity: animationActive ? 0.03 : 0,
+          opacity: animationActive ? 0.04 : 0,
           scale: animationActive ? 1 : 0.8,
           rotate: animationActive ? 360 : 0,
         }}
@@ -687,12 +717,42 @@ export default function AnalysisPage() {
         <ThreeDVisualization type="hero" className="w-full h-full" />
       </motion.div>
 
-      {/* Floating particles */}
-      {Array.from({ length: 8 }).map((_, i) => (
+      {/* Floating orbs with subtle glow effects */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <motion.div
+          key={`orb-${i}`}
+          className={`absolute w-32 h-32 rounded-full bg-gradient-to-r ${
+            i % 2 === 0 ? "from-blue-500/5 to-cyan-500/3" : "from-purple-500/5 to-pink-500/3"
+          }`}
+          initial={{
+            x: Math.random() * windowSize.width,
+            y: Math.random() * windowSize.height,
+            scale: 0,
+          }}
+          animate={{
+            x: [Math.random() * windowSize.width, Math.random() * windowSize.width, Math.random() * windowSize.width],
+            y: [
+              Math.random() * windowSize.height,
+              Math.random() * windowSize.height,
+              Math.random() * windowSize.height,
+            ],
+            scale: animationActive ? [0, 1, 0.5, 1, 0] : 0,
+          }}
+          transition={{
+            duration: 20 + Math.random() * 10,
+            times: [0, 0.2, 0.5, 0.8, 1],
+            repeat: Number.POSITIVE_INFINITY,
+            delay: i * 2,
+          }}
+        />
+      ))}
+
+      {/* Floating particles for ambient effect */}
+      {Array.from({ length: 15 }).map((_, i) => (
         <motion.div
           key={`particle-${i}`}
           className={`absolute w-1 h-1 rounded-full ${
-            i % 3 === 0 ? "bg-blue-400/30" : i % 3 === 1 ? "bg-cyan-400/30" : "bg-purple-400/30"
+            i % 3 === 0 ? "bg-blue-400/50" : i % 3 === 1 ? "bg-cyan-400/50" : "bg-purple-400/50"
           }`}
           initial={{
             x: Math.random() * windowSize.width,
@@ -707,7 +767,7 @@ export default function AnalysisPage() {
               Math.random() * windowSize.height,
               Math.random() * windowSize.height,
             ],
-            opacity: animationActive ? [0, 0.5, 0] : 0,
+            opacity: animationActive ? [0, 0.7, 0] : 0,
             scale: animationActive ? [0, 1, 0] : 0,
           }}
           transition={{
@@ -721,6 +781,7 @@ export default function AnalysisPage() {
     </div>
   )
 
+  // Confetti animation for celebrating high scores
   const ConfettiAnimation = () => {
     if (!showConfetti) return null
 
@@ -752,6 +813,7 @@ export default function AnalysisPage() {
     )
   }
 
+  // Error state with retry functionality
   if (error || (coordinates === null && !isLoading)) {
     return (
       <div className="min-h-screen bg-slate-900 relative">
@@ -780,6 +842,7 @@ export default function AnalysisPage() {
     )
   }
 
+  // Loading state with animated indicators
   if (isLoading || !realTimeData) {
     return (
       <div className="min-h-screen bg-slate-900 relative">
@@ -798,43 +861,41 @@ export default function AnalysisPage() {
     )
   }
 
-  const suggestion = getSuggestion(geoScore)
-
   return (
     <div className="min-h-screen bg-slate-900 relative">
-      {/* Earth Animation Background */}
+      {/* Animated background */}
       <EarthBackground />
 
-      {/* Confetti Animation */}
+      {/* Confetti celebration */}
       <ConfettiAnimation />
 
-      {/* Business Type Selector Modal */}
+      {/* Business type selection modal */}
       <BusinessTypeSelector
         isOpen={showBusinessSelector}
         onClose={() => setShowBusinessSelector(false)}
         onSelect={handleBusinessTypeSelect}
       />
 
-      <header className="relative z-10 py-4 px-6">
+      {/* Header with navigation and controls */}
+      <header className="relative z-10 py-6 px-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="rounded-full overflow-hidden border-2 border-blue-500 shadow-lg shadow-blue-500/30 w-12 h-12">
+            <div className="rounded-full overflow-hidden border-4 border-blue-500 shadow-lg shadow-blue-500/30 w-12 h-12">
               <Image src="/logo.png" alt="GeoScope Credit Logo" width={48} height={48} className="object-cover" />
             </div>
-            <div className="ml-3">
-              <h1 className="text-2xl font-bold text-white">GeoScope</h1>
-              <p className="text-blue-300 text-sm">Location Intelligence</p>
+            <div className="ml-4">
+              <h1 className="text-2xl font-bold text-white">GeoScope Credit</h1>
+              <p className="text-blue-300 text-sm">Location Intelligence Report</p>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             <Button
               onClick={() => setIs3DMode(!is3DMode)}
               variant="outline"
-              size="sm"
-              className={`border-purple-600 text-purple-300 hover:bg-purple-900/30 ${is3DMode ? 'bg-purple-900/50' : ''}`}
+              className={`border-purple-600 text-purple-300 hover:bg-purple-900/30 ${is3DMode ? 'bg-purple-900/30' : ''}`}
             >
-              {is3DMode ? <Eye className="w-4 h-4 mr-2" /> : <Layers3 className="w-4 h-4 mr-2" />}
-              {is3DMode ? '2D View' : '3D View'}
+              {is3DMode ? <MapIcon className="w-4 h-4 mr-2" /> : <Cube className="w-4 h-4 mr-2" />}
+              {is3DMode ? '2D View' : '3D Buildings'}
             </Button>
             <Button
               onClick={() => {
@@ -845,7 +906,6 @@ export default function AnalysisPage() {
                 router.push("/")
               }}
               variant="outline"
-              size="sm"
               className="border-cyan-600 text-cyan-300 hover:bg-cyan-900/30"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -863,62 +923,62 @@ export default function AnalysisPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-6 py-8 relative z-10">
-        {/* Hero Section with Enhanced Score Display */}
-        <div className="flex flex-col xl:flex-row items-start justify-between mb-12 gap-8">
+      {/* Main content area */}
+      <div className="container mx-auto px-8 py-12 relative z-10">
+        {/* Hero section with enhanced score display */}
+        <div className="flex flex-col lg:flex-row items-start justify-between mb-16 gap-12">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.8 }}
-            className="xl:w-1/2 space-y-6"
+            className="lg:w-1/2"
           >
-            {/* Location Header */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <MapPin className="w-5 h-5 text-cyan-400" />
-                <h2 className="text-xl text-cyan-300">Analysis Complete</h2>
+            {/* Location header with status indicators */}
+            <div className="mb-8">
+              <div className="flex items-center space-x-3 mb-4">
+                <MapPin className="w-6 h-6 text-cyan-400" />
+                <h2 className="text-2xl text-cyan-300">Analysis Complete</h2>
               </div>
-              <h3 className="text-xl md:text-2xl font-bold text-white leading-tight">{selectedLocation}</h3>
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 leading-tight">{selectedLocation}</h3>
               
-              {/* Status Badges */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-3 py-1 border border-white/20">
+              {/* Status badges */}
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-green-400 text-xs font-medium">Live Analysis</span>
+                  <span className="text-green-400 text-sm font-medium">Live Analysis</span>
                 </div>
                 {businessCategory && (
-                  <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-3 py-1 border border-white/20">
-                    <Store className="w-3 h-3 text-purple-400" />
-                    <span className="text-purple-400 text-xs font-medium">{businessCategory}</span>
+                  <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
+                    <Store className="w-4 h-4 text-purple-400" />
+                    <span className="text-purple-400 text-sm font-medium">{businessCategory}</span>
                   </div>
                 )}
-                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-3 py-1 border border-white/20">
-                  <Globe className="w-3 h-3 text-blue-400" />
-                  <span className="text-blue-400 text-xs font-medium">
+                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
+                  <Globe className="w-4 h-4 text-blue-400" />
+                  <span className="text-blue-400 text-sm font-medium">
                     {coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Enhanced Circular Score Display */}
-            <Card className="bg-white/5 backdrop-blur-xl border border-white/20 relative overflow-hidden">
+            {/* Enhanced circular score display */}
+            <Card className={`bg-white/5 backdrop-blur-xl border border-white/20 relative overflow-hidden mb-8`}>
               <CardContent className="p-8">
                 <div className="text-center">
                   <div className="flex items-center justify-center space-x-3 mb-6">
-                    <Zap className="w-6 h-6 text-cyan-400" />
+                    <Zap className="w-8 h-8 text-cyan-400" />
                     <h4 className="text-2xl font-bold text-white">GeoScope Score</h4>
                   </div>
                   
-                  {/* Beautiful Circular Progress Score */}
+                  {/* Circular progress indicator */}
                   <div className="relative w-48 h-48 mx-auto mb-6">
                     <svg className="w-48 h-48 transform -rotate-90" viewBox="0 0 200 200">
                       {/* Background circle */}
                       <circle
                         cx="100"
                         cy="100"
-                        r="85"
+                        r="80"
                         stroke="rgba(255,255,255,0.1)"
                         strokeWidth="12"
                         fill="none"
@@ -927,81 +987,68 @@ export default function AnalysisPage() {
                       <motion.circle
                         cx="100"
                         cy="100"
-                        r="85"
-                        stroke={geoScore >= 75 ? "#10b981" : geoScore >= 60 ? "#f59e0b" : "#ef4444"}
+                        r="80"
+                        stroke={geoScore >= 75 ? "#10b981" : geoScore >= 50 ? "#f59e0b" : "#ef4444"}
                         strokeWidth="12"
                         fill="none"
                         strokeLinecap="round"
-                        strokeDasharray={`${2 * Math.PI * 85}`}
-                        initial={{ strokeDashoffset: 2 * Math.PI * 85 }}
+                        strokeDasharray={`${2 * Math.PI * 80}`}
+                        initial={{ strokeDashoffset: 2 * Math.PI * 80 }}
                         animate={{ 
-                          strokeDashoffset: !scoreAnimated ? 2 * Math.PI * 85 * (1 - geoScore / 100) : 2 * Math.PI * 85 * (1 - geoScore / 100)
+                          strokeDashoffset: !scoreAnimated ? 2 * Math.PI * 80 * (1 - geoScore / 100) : 2 * Math.PI * 80 * (1 - geoScore / 100)
                         }}
-                        transition={{ duration: 2.5, ease: "easeOut" }}
+                        transition={{ duration: 2, ease: "easeOut" }}
                         onAnimationComplete={() => setScoreAnimated(true)}
+                        className="drop-shadow-lg"
                         style={{
-                          filter: `drop-shadow(0 0 8px ${geoScore >= 75 ? "#10b981" : geoScore >= 60 ? "#f59e0b" : "#ef4444"}40)`
+                          filter: `drop-shadow(0 0 8px ${geoScore >= 75 ? "#10b981" : geoScore >= 50 ? "#f59e0b" : "#ef4444"}40)`
                         }}
                       />
-                      {/* Gradient overlay */}
-                      <defs>
-                        <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor={geoScore >= 75 ? "#10b981" : geoScore >= 60 ? "#f59e0b" : "#ef4444"} />
-                          <stop offset="100%" stopColor={geoScore >= 75 ? "#34d399" : geoScore >= 60 ? "#fbbf24" : "#f87171"} />
-                        </linearGradient>
-                      </defs>
                     </svg>
+                    {/* Score number in center */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-                          className={`text-6xl font-bold ${colorFor(geoScore)} mb-2`}
-                        >
-                          {geoScore}
-                        </motion.div>
-                        <div className="text-white/60 text-sm">out of 100</div>
-                      </div>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                        className={`text-6xl font-bold ${colorFor(geoScore)}`}
+                      >
+                        {geoScore}
+                      </motion.div>
                     </div>
                   </div>
-                  
-                  <Badge variant="outline" className={`${colorFor(geoScore)} border-current text-lg px-6 py-2 mb-4`}>
+
+                  {/* Score label and slider */}
+                  <Badge variant="outline" className={`${colorFor(geoScore)} border-current text-lg px-4 py-2 mb-6`}>
                     {labelFor(geoScore)}
                   </Badge>
                   
-                  {/* Enhanced Score Slider */}
+                  {/* Enhanced score slider */}
                   <div className="mt-6">
                     <div className="flex justify-between text-sm text-gray-300 mb-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <span>Poor</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <span>Good</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span>Excellent</span>
-                      </div>
+                      <span className="text-red-400">Poor</span>
+                      <span className="text-yellow-400">Average</span>
+                      <span className="text-green-400">Excellent</span>
                     </div>
                     <div className="relative h-4 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full overflow-hidden">
+                      <div className="absolute inset-0 bg-black/30 rounded-full"></div>
                       <motion.div
-                        className="absolute top-0 left-0 h-full bg-white/20 rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${geoScore}%` }}
-                        transition={{ duration: 2, ease: "easeOut" }}
-                      />
-                      <motion.div
-                        className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-gray-800"
+                        className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-gray-300"
                         initial={{ left: "0%" }}
                         animate={{ left: `${geoScore}%` }}
                         transition={{ duration: 2, ease: "easeOut" }}
                         style={{ marginLeft: "-12px" }}
                       />
+                      {/* Scale markers */}
+                      {[0, 25, 50, 75, 100].map((mark) => (
+                        <div
+                          key={mark}
+                          className="absolute top-0 bottom-0 w-0.5 bg-white/50"
+                          style={{ left: `${mark}%` }}
+                        />
+                      ))}
                     </div>
-                    <div className="flex justify-between text-xs text-gray-400 mt-2">
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
                       <span>0</span>
                       <span>25</span>
                       <span>50</span>
@@ -1013,44 +1060,46 @@ export default function AnalysisPage() {
               </CardContent>
             </Card>
 
-            {/* Suggestion Card */}
-            <Card className={`${suggestion.bgColor} backdrop-blur-xl border`}>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <suggestion.icon className={`w-6 h-6 ${suggestion.color} flex-shrink-0 mt-1`} />
+            {/* Smart suggestions based on score */}
+            <Card className={`${suggestions.bgColor} border ${suggestions.borderColor} backdrop-blur-xl mb-8`}>
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-4">
+                  <suggestions.icon className={`w-8 h-8 ${suggestions.color} flex-shrink-0 mt-1`} />
                   <div>
-                    <h4 className={`font-semibold ${suggestion.color} mb-1`}>{suggestion.title}</h4>
-                    <p className="text-white/80 text-sm">{suggestion.message}</p>
+                    <h4 className={`text-lg font-bold ${suggestions.color} mb-2`}>{suggestions.title}</h4>
+                    <p className="text-white/80">{suggestions.message}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Enhanced Factor Grid */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Enhanced factor grid */}
+            <div className="grid grid-cols-2 gap-4">
               {factors.map((factor, index) => (
                 <motion.div
                   key={factor.id}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.6 + index * 0.1 }}
-                  className={`bg-white/5 backdrop-blur-xl border border-white/20 p-4 rounded-xl text-white cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-white/10 relative overflow-hidden ${activeLayer === factor.id ? 'ring-2 ring-cyan-400' : ''}`}
-                  onClick={() => handleLayerChange(factor.id)}
+                  className={`bg-white/5 backdrop-blur-xl p-6 rounded-2xl text-white cursor-pointer transition-all duration-300 hover:scale-105 shadow-lg relative overflow-hidden border border-white/20 ${
+                    activeLayer === factor.id ? 'ring-2 ring-cyan-400 bg-white/10' : ''
+                  }`}
+                  onClick={() => setActiveLayer(factor.id)}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <factor.icon className="w-6 h-6" />
-                    {factor.trend === "up" && <TrendingUp className="w-4 h-4 text-green-400" />}
-                    {factor.trend === "down" && <TrendingDown className="w-4 h-4 text-red-400" />}
-                    {factor.trend === "stable" && <CheckCircle className="w-4 h-4 text-blue-400" />}
+                    <factor.icon className="w-8 h-8" />
+                    {factor.trend === "up" && <TrendingUp className="w-5 h-5 text-green-200" />}
+                    {factor.trend === "down" && <TrendingDown className="w-5 h-5 text-red-200" />}
+                    {factor.trend === "stable" && <CheckCircle className="w-5 h-5 text-blue-200" />}
                   </div>
-                  <div className="text-2xl font-bold mb-1">{factor.score}</div>
+                  <div className="text-3xl font-bold mb-1">{factor.score}</div>
                   <div className="text-sm opacity-90 mb-2">{factor.name}</div>
-                  <Progress value={factor.score} className="h-1.5 bg-white/20" />
+                  <Progress value={factor.score} className="h-2 bg-white/20" />
                   
                   {/* Active indicator */}
                   {activeLayer === factor.id && (
                     <div className="absolute inset-0 bg-cyan-400/10 flex items-center justify-center">
-                      <span className="text-xs font-medium text-cyan-400">Active Layer</span>
+                      <span className="text-sm font-medium text-cyan-300">Active Layer</span>
                     </div>
                   )}
                 </motion.div>
@@ -1058,34 +1107,39 @@ export default function AnalysisPage() {
             </div>
           </motion.div>
 
-          {/* Enhanced Map Section */}
+          {/* Enhanced map section with 3D support */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="xl:w-1/2 h-[850px]"
+            className="lg:w-1/2 h-[900px]"
           >
             <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg h-full">
-              <CardHeader className="pb-3">
+              <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-white flex items-center space-x-2">
                     <Activity className="w-5 h-5 text-green-400" />
                     <span>Interactive Analysis Map</span>
+                    {is3DMode && (
+                      <Badge variant="outline" className="border-purple-400 text-purple-400 ml-2">
+                        3D Buildings
+                      </Badge>
+                    )}
                   </CardTitle>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="border-cyan-400 text-cyan-400 text-xs">
+                    <Badge variant="outline" className="border-cyan-400 text-cyan-400">
                       2km Radius
                     </Badge>
-                    <Badge variant="outline" className="border-purple-400 text-purple-400 text-xs">
+                    <Badge variant="outline" className="border-purple-400 text-purple-400">
                       {transitStations.length} Transit
                     </Badge>
-                    <Badge variant="outline" className="border-orange-400 text-orange-400 text-xs">
+                    <Badge variant="outline" className="border-orange-400 text-orange-400">
                       {relevantCompetitors.length} Competitors
                     </Badge>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 h-[776px]">
+              <CardContent className="p-6 h-full">
                 <MapView
                   coordinates={coordinates}
                   selectedLocation={selectedLocation}
@@ -1093,7 +1147,7 @@ export default function AnalysisPage() {
                   transitStations={transitStations}
                   activeLayer={activeLayer}
                   factors={factors}
-                  onLayerChange={handleLayerChange}
+                  onLayerChange={setActiveLayer}
                   is3DMode={is3DMode}
                 />
               </CardContent>
@@ -1101,68 +1155,156 @@ export default function AnalysisPage() {
           </motion.div>
         </div>
 
-        {/* Enhanced Quick Stats Overview */}
+        {/* Enhanced Location Intelligence Overview with Accordions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="mb-12"
+          className="mb-16"
         >
           <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
             <CardHeader>
               <CardTitle className="text-white flex items-center space-x-2">
                 <BarChart3 className="w-5 h-5 text-cyan-400" />
                 <span>Location Intelligence Overview</span>
-                <Badge variant="outline" className="border-green-400 text-green-400 ml-auto text-xs">
+                <Badge variant="outline" className="border-green-400 text-green-400 ml-auto">
                   Real-time Data
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
-                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Store className="w-6 h-6 text-orange-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-xl">{relevantCompetitors.length}</div>
-                  <div className="text-cyan-300 text-xs">Competitors</div>
-                </div>
-                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Train className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-xl">{transitStations.length}</div>
-                  <div className="text-cyan-300 text-xs">Transit</div>
-                </div>
-                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Users className="w-6 h-6 text-green-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-xl">{realTimeData?.footTraffic || 0}</div>
-                  <div className="text-cyan-300 text-xs">Traffic Score</div>
-                </div>
-                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Shield className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-xl">{realTimeData?.safety || 0}</div>
-                  <div className="text-cyan-300 text-xs">Safety Score</div>
-                </div>
-                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <TrendingUp className="w-6 h-6 text-orange-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-xl">{realTimeData?.competition || 0}</div>
-                  <div className="text-cyan-300 text-xs">Competition</div>
-                </div>
-                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Bus className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-xl">{realTimeData?.accessibility || 0}</div>
-                  <div className="text-cyan-300 text-xs">Accessibility</div>
-                </div>
-                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Activity className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-xl">{nearbyPlaces.length}</div>
-                  <div className="text-cyan-300 text-xs">Total Places</div>
-                </div>
-                <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Star className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-xl">
-                    {Math.round((realTimeData?.footTraffic + realTimeData?.safety + realTimeData?.competition + realTimeData?.accessibility) / 4) || 0}
-                  </div>
-                  <div className="text-cyan-300 text-xs">Avg Score</div>
-                </div>
-              </div>
+              <Accordion type="single" collapsible className="w-full space-y-4">
+                <AccordionItem value="quick-stats" className="border border-white/10 rounded-lg bg-white/5 backdrop-blur-xl">
+                  <AccordionTrigger className="px-6 py-4 text-white hover:text-cyan-300">
+                    <div className="flex items-center space-x-3">
+                      <Target className="w-5 h-5 text-cyan-400" />
+                      <span className="text-lg font-semibold">Quick Statistics</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
+                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                        <Store className="w-8 h-8 text-orange-400 mx-auto mb-2" />
+                        <div className="text-white font-bold text-2xl">{relevantCompetitors.length}</div>
+                        <div className="text-cyan-300 text-sm">Competitors</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                        <Train className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                        <div className="text-white font-bold text-2xl">{transitStations.length}</div>
+                        <div className="text-cyan-300 text-sm">Transit</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                        <Users className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                        <div className="text-white font-bold text-2xl">{realTimeData?.footTraffic || 0}</div>
+                        <div className="text-cyan-300 text-sm">Traffic Score</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                        <Shield className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+                        <div className="text-white font-bold text-2xl">{realTimeData?.safety || 0}</div>
+                        <div className="text-cyan-300 text-sm">Safety Score</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                        <TrendingUp className="w-8 h-8 text-orange-400 mx-auto mb-2" />
+                        <div className="text-white font-bold text-2xl">{realTimeData?.competition || 0}</div>
+                        <div className="text-cyan-300 text-sm">Competition</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                        <Bus className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                        <div className="text-white font-bold text-2xl">{realTimeData?.accessibility || 0}</div>
+                        <div className="text-cyan-300 text-sm">Accessibility</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                        <Activity className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+                        <div className="text-white font-bold text-2xl">{nearbyPlaces.length}</div>
+                        <div className="text-cyan-300 text-sm">Total Places</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                        <Star className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
+                        <div className="text-white font-bold text-2xl">
+                          {Math.round((nearbyPlaces.filter(p => p.rating).reduce((sum, p) => sum + (p.rating || 0), 0) / nearbyPlaces.filter(p => p.rating).length) * 10) / 10 || 0}
+                        </div>
+                        <div className="text-cyan-300 text-sm">Avg Rating</div>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="transit-details" className="border border-white/10 rounded-lg bg-white/5 backdrop-blur-xl">
+                  <AccordionTrigger className="px-6 py-4 text-white hover:text-cyan-300">
+                    <div className="flex items-center space-x-3">
+                      <Train className="w-5 h-5 text-purple-400" />
+                      <span className="text-lg font-semibold">Transit Stations ({transitStations.length})</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-4">
+                    {transitStations.length > 0 ? (
+                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {transitStations.slice(0, 6).map((station, index) => (
+                          <div key={index} className="bg-white/5 backdrop-blur-xl rounded-lg p-4 border border-white/10">
+                            <div className="flex items-start space-x-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                station.types?.includes('train_station') || station.types?.includes('subway_station') 
+                                  ? 'bg-purple-500' : 'bg-blue-500'
+                              }`}>
+                                {station.types?.includes('train_station') || station.types?.includes('subway_station') ? '🚊' : '🚌'}
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="text-white font-semibold text-sm">{station.name}</h4>
+                                <p className="text-white/60 text-xs mt-1">{station.vicinity}</p>
+                                <Badge variant="outline" className="text-xs mt-2 border-purple-400 text-purple-400">
+                                  {station.types?.includes('train_station') ? 'Train' : 
+                                   station.types?.includes('subway_station') ? 'Subway' : 'Bus'}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Train className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-white/60">No transit stations found within 2km radius</p>
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="nearby-amenities" className="border border-white/10 rounded-lg bg-white/5 backdrop-blur-xl">
+                  <AccordionTrigger className="px-6 py-4 text-white hover:text-cyan-300">
+                    <div className="flex items-center space-x-3">
+                      <MapPin className="w-5 h-5 text-green-400" />
+                      <span className="text-lg font-semibold">Nearby Amenities ({nearbyPlaces.length})</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-4">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {nearbyPlaces.slice(0, 9).map((place, index) => (
+                        <div key={index} className="bg-white/5 backdrop-blur-xl rounded-lg p-4 border border-white/10">
+                          <div className="flex items-start space-x-3">
+                            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
+                              {place.types?.includes('restaurant') ? '🍽️' :
+                               place.types?.includes('store') ? '🏪' :
+                               place.types?.includes('hospital') ? '🏥' :
+                               place.types?.includes('school') ? '🏫' : '🏢'}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="text-white font-semibold text-sm">{place.name}</h4>
+                              <p className="text-white/60 text-xs mt-1">{place.vicinity}</p>
+                              {place.rating && (
+                                <div className="flex items-center space-x-1 mt-2">
+                                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                                  <span className="text-yellow-400 text-xs">{place.rating}</span>
+                                  <span className="text-white/40 text-xs">({place.user_ratings_total || 0})</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </CardContent>
           </Card>
         </motion.div>
@@ -1172,7 +1314,7 @@ export default function AnalysisPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2 }}
-          className="grid lg:grid-cols-2 gap-6 mb-12"
+          className="grid lg:grid-cols-2 gap-8 mb-16"
         >
           {/* 24-Hour Traffic Pattern */}
           <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
@@ -1186,7 +1328,7 @@ export default function AnalysisPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="relative h-64">
+              <div className="relative h-80">
                 <canvas ref={hourlyChartRef} className="w-full h-full"></canvas>
               </div>
             </CardContent>
@@ -1204,7 +1346,7 @@ export default function AnalysisPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="relative h-64">
+              <div className="relative h-80">
                 <canvas ref={weeklyChartRef} className="w-full h-full"></canvas>
               </div>
             </CardContent>
@@ -1217,17 +1359,17 @@ export default function AnalysisPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.4 }}
-            className="mb-12"
+            className="mb-16"
           >
             <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-white flex items-center space-x-2">
                   <Store className="w-5 h-5 text-orange-400" />
                   <span>{businessCategory} Market Analysis</span>
-                  <Badge variant="outline" className="border-orange-400 text-orange-400 text-xs">
+                  <Badge variant="outline" className="border-orange-400 text-orange-400">
                     {relevantCompetitors.length} Competitors
                   </Badge>
-                  <Badge variant="outline" className={`ml-2 text-xs ${
+                  <Badge variant="outline" className={`ml-2 ${
                     realTimeData?.detailedAnalysis?.competitorAnalysis?.marketSaturation === "Saturated" 
                       ? "border-red-400 text-red-400"
                       : realTimeData?.detailedAnalysis?.competitorAnalysis?.marketSaturation === "Competitive"
@@ -1270,7 +1412,7 @@ export default function AnalysisPage() {
                 
                 {relevantCompetitors.length > 6 && (
                   <div className="mt-6 text-center">
-                    <Badge variant="outline" className="border-orange-400 text-orange-400 text-xs">
+                    <Badge variant="outline" className="border-orange-400 text-orange-400">
                       +{relevantCompetitors.length - 6} more competitors in the area
                     </Badge>
                   </div>
@@ -1285,19 +1427,19 @@ export default function AnalysisPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.8, duration: 0.8 }}
-          className="py-6 mt-12 border-t border-white/10"
+          className="py-8 mt-16 border-t border-white/10"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="rounded-full overflow-hidden w-8 h-8 border-2 border-blue-500/50">
-                <Image src="/logo.png" alt="GeoScope Credit" width={32} height={32} className="object-cover" />
+              <div className="rounded-full overflow-hidden w-10 h-10 border-2 border-blue-500/50">
+                <Image src="/logo.png" alt="GeoScope Credit" width={40} height={40} className="object-cover" />
               </div>
-              <div className="text-blue-300 text-sm">Coded by Harman • Built in Canada</div>
+              <div className="text-blue-300">Coded by Harman • Built in Canada</div>
             </div>
-            <div className="flex items-center space-x-4 text-xs text-slate-400">
+            <div className="flex items-center space-x-4 text-sm text-slate-400">
               <span>Last updated: {new Date().toLocaleTimeString()}</span>
-              <Badge variant="outline" className="border-green-400 text-green-400 text-xs">
-                <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+              <Badge variant="outline" className="border-green-400 text-green-400">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
                 Live
               </Badge>
             </div>

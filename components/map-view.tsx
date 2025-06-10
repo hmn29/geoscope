@@ -49,7 +49,7 @@ export function MapView({
   // Safety check for factors array
   const safeFactor = factors && factors.length > 0 ? factors.find((f) => f.id === activeLayer) : null
 
-  // Parameter explanations based on score
+  // Parameter explanations based on score - these provide context for business decisions
   const getParameterExplanation = (factor: any) => {
     if (!factor) return "No data available for this parameter."
 
@@ -58,24 +58,24 @@ export function MapView({
 
     switch (factor.id) {
       case "footHeat":
-        if (score >= 80) explanation = "Excellent foot traffic - high pedestrian activity throughout the day"
-        else if (score >= 60) explanation = "Good foot traffic - moderate pedestrian flow with peak hours"
-        else explanation = "Low foot traffic - limited pedestrian activity, may need marketing boost"
+        if (score >= 80) explanation = "Excellent foot traffic - high pedestrian activity throughout the day indicates strong potential for walk-in customers"
+        else if (score >= 60) explanation = "Good foot traffic - moderate pedestrian flow with identifiable peak hours, suitable for most retail businesses"
+        else explanation = "Low foot traffic - limited pedestrian activity may require additional marketing efforts or strategic positioning"
         break
       case "hazardHeat":
-        if (score >= 80) explanation = "Very safe area - low crime rates and good security presence"
-        else if (score >= 60) explanation = "Moderately safe - average safety with some precautions needed"
-        else explanation = "Safety concerns - higher crime rates, consider additional security measures"
+        if (score >= 80) explanation = "Very safe area - low crime rates and good security infrastructure create a comfortable environment for customers and staff"
+        else if (score >= 60) explanation = "Moderately safe - average safety levels with some precautions recommended for evening operations"
+        else explanation = "Safety concerns - higher risk factors may affect customer comfort and require additional security measures"
         break
       case "competitors":
-        if (score >= 80) explanation = "Low competition - great opportunity with few direct competitors"
-        else if (score >= 60) explanation = "Moderate competition - balanced market with room for growth"
-        else explanation = "High competition - saturated market, differentiation strategy needed"
+        if (score >= 80) explanation = "Low competition - excellent opportunity with few direct competitors, allowing for market leadership potential"
+        else if (score >= 60) explanation = "Moderate competition - balanced market with room for differentiation and growth strategies"
+        else explanation = "High competition - saturated market requiring strong differentiation strategy and competitive pricing"
         break
       case "access":
-        if (score >= 80) explanation = "Excellent accessibility - multiple transit options and easy access"
-        else if (score >= 60) explanation = "Good accessibility - decent transit connections available"
-        else explanation = "Limited accessibility - few transit options, customers may need parking"
+        if (score >= 80) explanation = "Excellent accessibility - multiple transit options and easy access expand your potential customer base significantly"
+        else if (score >= 60) explanation = "Good accessibility - decent transit connections available, though some customers may need alternative transport"
+        else explanation = "Limited accessibility - few transit options may restrict customer reach, consider parking availability"
         break
       default:
         explanation = "Analysis data is being processed..."
@@ -84,7 +84,7 @@ export function MapView({
     return explanation
   }
 
-  // Initialize Google Maps with proper loading management and 3D support
+  // Initialize Google Maps with comprehensive 3D building support
   useEffect(() => {
     let isMounted = true
 
@@ -105,9 +105,9 @@ export function MapView({
           throw new Error("Map container not available")
         }
 
-        console.log("Creating map instance with 3D support")
+        console.log("Creating map instance with enhanced 3D building support")
 
-        // Clear existing markers and overlays
+        // Clear existing markers and overlays to prevent memory leaks
         markers.forEach((marker) => marker.setMap(null))
         overlays.forEach((overlay) => overlay.setMap(null))
         if (isMounted) {
@@ -115,15 +115,15 @@ export function MapView({
           setOverlays([])
         }
 
-        // Create map instance with enhanced dark theme and 3D support
+        // Create map instance with enhanced 3D building visualization
         const mapInstance = new window.google.maps.Map(mapRef.current, {
           center: coordinates,
-          zoom: is3DMode ? 18 : 15,
+          zoom: is3DMode ? 19 : 15, // Higher zoom for 3D building detail
           mapTypeId: is3DMode ? 'satellite' : 'roadmap',
-          tilt: is3DMode ? 45 : 0,
-          heading: is3DMode ? 90 : 0,
+          tilt: is3DMode ? 45 : 0, // 45-degree tilt for 3D building view
+          heading: is3DMode ? 90 : 0, // Rotate for better building perspective
           styles: is3DMode ? [] : [
-            // Enhanced dark theme with better contrast
+            // Enhanced dark theme with better contrast for 2D mode
             { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
             { elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
             { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
@@ -147,7 +147,7 @@ export function MapView({
             { featureType: "transit.station", elementType: "geometry", stylers: [{ color: "#3b82f6" }] },
             { featureType: "water", elementType: "geometry", stylers: [{ color: "#0c4a6e" }] },
             { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#0ea5e9" }] },
-            // Hide most POIs for cleaner look
+            // Hide most POIs for cleaner visualization
             { featureType: "poi.business", stylers: [{ visibility: "off" }] },
             { featureType: "poi.school", stylers: [{ visibility: "off" }] },
             { featureType: "poi.medical", stylers: [{ visibility: "off" }] },
@@ -158,15 +158,29 @@ export function MapView({
           ],
           disableDefaultUI: true,
           zoomControl: true,
-          mapTypeControl: is3DMode,
+          mapTypeControl: is3DMode, // Enable map type control in 3D mode
           streetViewControl: false,
           fullscreenControl: false,
           clickableIcons: false,
-          rotateControl: is3DMode,
-          tiltControl: is3DMode,
+          rotateControl: is3DMode, // Enable rotation controls for 3D
+          tiltControl: is3DMode, // Enable tilt controls for 3D
         })
 
-        // Add main location marker (Enhanced RED PIN)
+        // Enable 3D buildings in 3D mode for realistic city visualization
+        if (is3DMode) {
+          mapInstance.setOptions({
+            mapTypeId: 'satellite',
+            tilt: 45,
+            heading: 90,
+          })
+          
+          // Add a slight delay to ensure 3D buildings render properly
+          setTimeout(() => {
+            mapInstance.setTilt(45)
+          }, 1000)
+        }
+
+        // Add main location marker with enhanced design
         const mainMarker = new window.google.maps.Marker({
           position: coordinates,
           map: mapInstance,
@@ -214,7 +228,7 @@ export function MapView({
 
         const newOverlays = radiusCircle ? [radiusCircle] : []
 
-        // Add nearby places markers with enhanced info windows
+        // Add nearby places markers with enhanced info windows and categorization
         const infoWindow = new window.google.maps.InfoWindow()
 
         if (nearbyPlaces && nearbyPlaces.length > 0) {
@@ -225,6 +239,7 @@ export function MapView({
             let iconEmoji = "🏢"
             const iconSize = 20
 
+            // Categorize places with appropriate icons and colors
             if (place.types?.includes("bus_station") || place.types?.includes("transit_station")) {
               iconColor = "#2196F3"
               iconEmoji = "🚌"
@@ -268,6 +283,7 @@ export function MapView({
               zIndex: 100,
             })
 
+            // Enhanced info window with comprehensive business information
             marker.addListener("click", () => {
               const content = `
                 <div style="color: #333; padding: 12px; max-width: 250px; font-family: system-ui; background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 8px;">
@@ -327,35 +343,35 @@ export function MapView({
     const newMarkers = [markers[0]] // Keep main marker
 
     if (activeLayer === "footHeat") {
-      // Enhanced foot traffic zones with better visualization
+      // Enhanced foot traffic zones with realistic business impact visualization
       const trafficSources = nearbyPlaces.filter((place) =>
         place.types?.some((t: string) =>
           ["restaurant", "cafe", "shopping_mall", "store", "transit_station", "bus_station", "train_station"].includes(t),
         ),
       )
 
-      // Create traffic zones around high-activity areas
+      // Create traffic zones around high-activity areas with business relevance
       trafficSources.slice(0, 12).forEach((source, index) => {
         if (!source.geometry?.location) return
 
-        // Calculate distance from main location
+        // Calculate distance from main location for impact assessment
         const distance = Math.sqrt(
           Math.pow(source.geometry.location.lat - coordinates.lat, 2) +
             Math.pow(source.geometry.location.lng - coordinates.lng, 2),
         )
 
-        // Closer places generate higher traffic
+        // Closer places generate higher traffic impact
         const intensity = Math.max(0.1, 1 - distance * 1000)
         const radius = 120 + intensity * 180
 
-        let color = "#EF4444" // Red for low traffic
+        let color = "#EF4444" // Red for low traffic impact
         let opacity = 0.15
 
         if (intensity > 0.7) {
-          color = "#10B981" // Green for high traffic
+          color = "#10B981" // Green for high traffic impact
           opacity = 0.35
         } else if (intensity > 0.4) {
-          color = "#F59E0B" // Yellow for medium traffic
+          color = "#F59E0B" // Yellow for medium traffic impact
           opacity = 0.25
         }
 
@@ -389,7 +405,7 @@ export function MapView({
       newOverlays.push(mainTrafficCircle)
 
     } else if (activeLayer === "hazardHeat") {
-      // Enhanced safety zones - GREEN for safe areas
+      // Enhanced safety zones - GREEN for safe areas with comprehensive safety factors
       const safetyFactors = {
         transitStations: transitStations.length,
         restaurants: nearbyPlaces.filter((p) => p.types?.includes("restaurant")).length,
@@ -398,7 +414,7 @@ export function MapView({
         police: nearbyPlaces.filter((p) => p.types?.includes("police")).length,
       }
 
-      // Create safety zones based on actual amenities
+      // Create safety zones based on actual safety infrastructure
       const safeAreas = [
         ...transitStations.slice(0, 4),
         ...nearbyPlaces.filter((p) => p.types?.includes("hospital")).slice(0, 3),
@@ -442,7 +458,7 @@ export function MapView({
         newOverlays.push(circle)
       })
 
-      // Add moderate risk areas for contrast
+      // Add moderate risk areas for realistic safety assessment
       const seed = Math.abs(Math.sin(coordinates.lat * 12.9898 + coordinates.lng * 78.233) * 43758.5453)
       const rand = (o = 0) => {
         const x = Math.sin(seed + o) * 1e4
@@ -475,7 +491,7 @@ export function MapView({
       })
 
     } else if (activeLayer === "competitors") {
-      // Enhanced competitor visualization
+      // Enhanced competitor visualization with business intelligence
       const competitors = nearbyPlaces.filter((place) =>
         place.types?.some((t: string) => ["store", "restaurant", "shop", "establishment", "shopping_mall"].includes(t)),
       )
@@ -507,6 +523,7 @@ export function MapView({
           zIndex: 200,
         })
 
+        // Enhanced competitor info window with business intelligence
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
             <div style="color: #333; padding: 12px; max-width: 280px; font-family: system-ui; background: linear-gradient(135deg, #fef3c7, #fbbf24); border-radius: 8px;">
@@ -529,7 +546,7 @@ export function MapView({
       })
 
     } else if (activeLayer === "access") {
-      // Enhanced transit station visualization
+      // Enhanced transit station visualization with accessibility insights
       console.log("Showing enhanced transit stations:", transitStations.length)
 
       transitStations.forEach((transit) => {
@@ -570,6 +587,7 @@ export function MapView({
           zIndex: 300,
         })
 
+        // Enhanced transit info window with accessibility details
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
             <div style="color: #333; padding: 12px; max-width: 280px; font-family: system-ui; background: linear-gradient(135deg, ${isTrain ? '#f3e8ff' : '#dbeafe'}, ${isTrain ? '#c4b5fd' : '#93c5fd'}); border-radius: 8px;">
@@ -579,6 +597,9 @@ export function MapView({
               <p style="margin: 0 0 8px 0; font-size: 12px; color: ${isTrain ? "#7c3aed" : "#2563eb"};">${transit.vicinity || ""}</p>
               <div style="margin: 8px 0; font-size: 11px; color: ${isTrain ? "#6b21a8" : "#1e40af"}; background: ${isTrain ? "#ede9fe" : "#e0f2fe"}; padding: 4px 8px; border-radius: 4px; display: inline-block;">
                 ${isTrain ? "Train/Subway Station" : "Bus Station"}
+              </div>
+              <div style="margin: 8px 0 0 0; font-size: 10px; color: ${isTrain ? "#7c3aed" : "#2563eb"};">
+                Accessibility: ${isTrain ? "High-capacity transit" : "Local area coverage"}
               </div>
             </div>
           `,
@@ -590,7 +611,7 @@ export function MapView({
 
         newMarkers.push(marker)
 
-        // Add enhanced accessibility circle
+        // Add enhanced accessibility circle with impact radius
         const circle = new window.google.maps.Circle({
           strokeColor: isTrain ? "#8B5CF6" : "#2196F3",
           strokeOpacity: 1,
@@ -602,12 +623,12 @@ export function MapView({
             lat: transit.geometry.location.lat,
             lng: transit.geometry.location.lng,
           },
-          radius: isTrain ? 500 : 300,
+          radius: isTrain ? 500 : 300, // Larger radius for train stations
         })
         newOverlays.push(circle)
       })
 
-      // If no transit stations found, show info
+      // If no transit stations found, show informative message
       if (transitStations.length === 0) {
         const noTransitInfo = new window.google.maps.InfoWindow({
           content: `
@@ -616,7 +637,7 @@ export function MapView({
                 No Transit Stations Found
               </h3>
               <p style="margin: 0 0 8px 0; font-size: 12px; color: #991b1b;">
-                No public transit stations were found within 2km of this location.
+                No public transit stations were found within 2km of this location. Consider alternative transportation options for customers.
               </p>
             </div>
           `,
@@ -647,7 +668,7 @@ export function MapView({
         <div className="absolute inset-0 flex items-center justify-center bg-white/5 backdrop-blur-xl z-10 rounded-2xl">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white text-lg">Loading {is3DMode ? '3D' : 'interactive'} map...</p>
+            <p className="text-white text-lg">Loading {is3DMode ? '3D buildings' : 'interactive'} map...</p>
             <p className="text-cyan-300 text-sm mt-2">Fetching location data...</p>
           </div>
         </div>
@@ -806,8 +827,9 @@ export function MapView({
         <div className="absolute top-6 left-6 bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/20">
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-            <span className="text-white font-medium text-sm">3D Satellite View</span>
+            <span className="text-white font-medium text-sm">3D Buildings View</span>
           </div>
+          <p className="text-white/60 text-xs mt-1">Rotate and tilt to explore</p>
         </div>
       )}
     </div>
