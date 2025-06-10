@@ -5,6 +5,9 @@ let loadPromise: Promise<void> | null = null
 let loadAttempts = 0
 const MAX_LOAD_ATTEMPTS = 3
 
+// Keep libraries array as a constant to prevent reloading warnings
+const GOOGLE_MAPS_LIBRARIES = ["places", "visualization"]
+
 export const loadGoogleMapsAPI = async (): Promise<void> => {
   // Only run in browser environment
   if (typeof window === "undefined") {
@@ -60,7 +63,7 @@ export const loadGoogleMapsAPI = async (): Promise<void> => {
   isGoogleMapsLoading = true
   loadPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script")
-    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAoEItHnh7E9es3rgAXxrHILFtJspawPRI&libraries=places,visualization&callback=initGoogleMaps`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAoEItHnh7E9es3rgAXxrHILFtJspawPRI&libraries=${GOOGLE_MAPS_LIBRARIES.join(',')}&callback=initGoogleMaps`
     script.async = true
     script.defer = true
 

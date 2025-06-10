@@ -8,7 +8,6 @@ import { ArrowRight, Zap, TrendingUp, Shield, FileText } from "lucide-react"
 
 import {
   GoogleMap,
-  Marker,
   useJsApiLoader,
   Circle,
 } from "@react-google-maps/api"
@@ -16,6 +15,9 @@ import {
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { BusinessTypeSelector } from "@/components/business-type-selector"
 import { Button } from "@/components/ui/button"
+
+// Keep libraries array as a constant to prevent reloading
+const GOOGLE_MAPS_LIBRARIES: ("places" | "visualization")[] = ["places", "visualization"]
 
 const CLEAN_DARK: google.maps.MapTypeStyle[] = [
   { elementType: "geometry", stylers: [{ color: "#0b0f19" }] },
@@ -42,7 +44,7 @@ export default function HomePage() {
 
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: "AIzaSyAoEItHnh7E9es3rgAXxrHILFtJspawPRI",
-    libraries: ["places"],
+    libraries: GOOGLE_MAPS_LIBRARIES, // Use constant array
   })
 
   const handleSelect = (
@@ -82,7 +84,24 @@ export default function HomePage() {
             gestureHandling: "none",
           }}
         >
-          <Marker position={coords ?? NYC} />
+          {/* Use AdvancedMarkerElement instead of deprecated Marker */}
+          {window.google?.maps?.marker?.AdvancedMarkerElement && (
+            <div
+              style={{
+                position: 'absolute',
+                transform: 'translate(-50%, -100%)',
+                left: '50%',
+                top: '50%',
+                width: '30px',
+                height: '30px',
+                backgroundColor: '#ef4444',
+                borderRadius: '50% 50% 50% 0',
+                transform: 'rotate(-45deg)',
+                border: '3px solid white',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+              }}
+            />
+          )}
           <Circle
             center={coords ?? NYC}
             radius={200}
