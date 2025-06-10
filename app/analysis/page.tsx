@@ -1205,7 +1205,7 @@ export default function AnalysisPage() {
               <div className="rounded-full overflow-hidden w-10 h-10 border-2 border-blue-500/50">
                 <Image src="/logo.png" alt="GeoScope Credit" width={40} height={40} className="object-cover" />
               </div>
-              <div className="text-blue-300">Created by Harman • Based in Canada</div>
+              <div className="text-blue-300">Coded by Harman • Built in Canada</div>
             </div>
             <div className="flex items-center space-x-4 text-sm text-slate-400">
               <span>Last updated: {new Date().toLocaleTimeString()}</span>
