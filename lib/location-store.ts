@@ -1,7 +1,6 @@
 // lib/location-store.ts
 /*
- * A single, authoritative copy of everything that belongs to the
- * scoring engine – no more duplicate helpers sprinkled around.
+ * Enhanced location scoring system with mathematical stability and consistency
  */
 import type { google } from "google-maps"
 
@@ -29,10 +28,15 @@ interface DetailedAnalysis {
   competitorAnalysis: any
   safetyMetrics: any
   locationFactors?: Record<string, number>
+  stabilityMetrics: {
+    consistencyScore: number
+    dataQuality: number
+    confidenceLevel: number
+  }
 }
 
 // -------------------------------------------------------------------
-//  🔑  Local-storage helpers (unchanged apart from TS cosmetics)
+//  🔑  Local-storage helpers
 // -------------------------------------------------------------------
 const STORAGE_KEY = "geoScopeLocationData"
 
@@ -62,8 +66,10 @@ export const locationKeyFromAddress = (addr: string) =>
     .replace(/-+/g, "-")
 
 // -------------------------------------------------------------------
-//  🎯  Scoring engine with circular area detection
+//  🎯  Enhanced Scoring Engine with Mathematical Stability
 // -------------------------------------------------------------------
+
+// Business type mappings
 const bizMap: Record<string, string[]> = {
   food_service: ["restaurant", "cafe", "bakery", "meal_takeaway", "food"],
   retail: ["store", "clothing_store", "shoe_store", "book_store", "electronics_store"],
@@ -74,6 +80,29 @@ const bizMap: Record<string, string[]> = {
   beauty: ["beauty_salon", "hair_care", "spa", "nail_salon"],
   fitness: ["gym", "fitness_center", "sports_club", "yoga_studio"],
   education: ["school", "university", "library", "tutoring"],
+}
+
+// Deterministic hash function for consistent scoring
+const deterministicHash = (input: string): number => {
+  let hash = 0
+  for (let i = 0; i < input.length; i++) {
+    const char = input.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  return Math.abs(hash)
+}
+
+// Create a stable random number generator based on coordinates
+const createStableRandom = (lat: number, lng: number, seed: string = ""): (() => number) => {
+  const coordString = `${lat.toFixed(6)}_${lng.toFixed(6)}_${seed}`
+  const hash = deterministicHash(coordString)
+  let state = hash
+  
+  return () => {
+    state = (state * 1664525 + 1013904223) % Math.pow(2, 32)
+    return (state / Math.pow(2, 32))
+  }
 }
 
 // Helper function to calculate distance between two coordinates
@@ -90,201 +119,210 @@ const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c // Distance in meters
 }
 
-// Function to determine accessibility score based on transit count
-const getAccessibilityScore = (transitStations: google.maps.places.PlaceResult[]): number => {
-  const transitCount = transitStations.length
+// Weighted scoring function with decay
+const calculateProximityScore = (
+  targetCoords: { lat: number; lng: number },
+  places: google.maps.places.PlaceResult[],
+  weights: Record<string, number>,
+  maxDistance: number = 1000
+): number => {
+  let totalScore = 0
+  let totalWeight = 0
 
-  console.log(`Transit stations found: ${transitCount}`)
+  places.forEach(place => {
+    if (!place.geometry?.location) return
 
-  if (transitCount >= 15) {
-    // 15+ transit stations = 85-95 score
-    return 85 + Math.random() * 10
-  } else if (transitCount >= 10) {
-    // 10-14 transit stations = 75-84 score
-    return 75 + Math.random() * 9
-  } else if (transitCount >= 6) {
-    // 6-9 transit stations = 65-74 score
-    return 65 + Math.random() * 9
-  } else if (transitCount >= 3) {
-    // 3-5 transit stations = 55-64 score
-    return 55 + Math.random() * 9
-  } else {
-    // Less than 3 transit stations = 30-40 score
-    return 30 + Math.random() * 10
-  }
+    const distance = calculateDistance(
+      targetCoords.lat,
+      targetCoords.lng,
+      place.geometry.location.lat,
+      place.geometry.location.lng
+    )
+
+    if (distance <= maxDistance) {
+      // Exponential decay function for distance
+      const distanceDecay = Math.exp(-distance / (maxDistance * 0.3))
+      
+      // Find the weight for this place type
+      let placeWeight = 0
+      place.types?.forEach(type => {
+        if (weights[type]) {
+          placeWeight = Math.max(placeWeight, weights[type])
+        }
+      })
+
+      if (placeWeight > 0) {
+        const score = placeWeight * distanceDecay
+        totalScore += score
+        totalWeight += distanceDecay
+      }
+    }
+  })
+
+  return totalWeight > 0 ? Math.min(100, (totalScore / totalWeight) * 100) : 0
 }
 
-// Function to determine foot traffic score based on circular areas
+// Enhanced foot traffic scoring with multiple factors
 const getFootTrafficScore = (
   coords: { lat: number; lng: number },
   nearby: google.maps.places.PlaceResult[],
 ): number => {
-  // Define high traffic sources (green areas)
-  const highTrafficSources = nearby.filter((place) =>
-    place.types?.some((t: string) =>
-      [
-        "restaurant",
-        "cafe",
-        "shopping_mall",
-        "store",
-        "transit_station",
-        "bus_station",
-        "train_station",
-        "subway_station",
-      ].includes(t),
-    ),
-  )
-
-  // Define medium traffic sources (yellow areas)
-  const mediumTrafficSources = nearby.filter((place) =>
-    place.types?.some((t: string) => ["bank", "pharmacy", "gas_station", "convenience_store"].includes(t)),
-  )
-
-  console.log(
-    `High traffic sources: ${highTrafficSources.length}, Medium traffic sources: ${mediumTrafficSources.length}`,
-  )
-
-  // Check if location falls within green areas (high traffic)
-  for (const source of highTrafficSources) {
-    if (source.geometry?.location) {
-      const distance = calculateDistance(
-        coords.lat,
-        coords.lng,
-        source.geometry.location.lat,
-        source.geometry.location.lng,
-      )
-
-      // If within 200m of high traffic source = green area
-      if (distance <= 200) {
-        console.log(`Location in GREEN traffic area (${distance}m from ${source.name})`)
-        return 85 + Math.random() * 10 // 85-95
-      }
-    }
+  const stableRandom = createStableRandom(coords.lat, coords.lng, "traffic")
+  
+  // Define traffic generators with weights
+  const trafficWeights: Record<string, number> = {
+    'shopping_mall': 1.0,
+    'transit_station': 0.9,
+    'bus_station': 0.8,
+    'train_station': 0.9,
+    'subway_station': 0.9,
+    'restaurant': 0.7,
+    'cafe': 0.6,
+    'store': 0.5,
+    'bank': 0.4,
+    'pharmacy': 0.4,
+    'gas_station': 0.3,
+    'convenience_store': 0.5
   }
 
-  // Check if location falls within yellow areas (medium traffic)
-  for (const source of mediumTrafficSources) {
-    if (source.geometry?.location) {
-      const distance = calculateDistance(
-        coords.lat,
-        coords.lng,
-        source.geometry.location.lat,
-        source.geometry.location.lng,
-      )
-
-      // If within 300m of medium traffic source = yellow area
-      if (distance <= 300) {
-        console.log(`Location in YELLOW traffic area (${distance}m from ${source.name})`)
-        return 50 + Math.random() * 10 // 50-60
-      }
-    }
-  }
-
-  // Check if close to any high traffic source (extended yellow area)
-  for (const source of highTrafficSources) {
-    if (source.geometry?.location) {
-      const distance = calculateDistance(
-        coords.lat,
-        coords.lng,
-        source.geometry.location.lat,
-        source.geometry.location.lng,
-      )
-
-      // If within 400m of high traffic source = extended yellow area
-      if (distance <= 400) {
-        console.log(`Location in extended YELLOW traffic area (${distance}m from ${source.name})`)
-        return 50 + Math.random() * 10 // 50-60
-      }
-    }
-  }
-
-  // Default: Red area (low traffic)
-  console.log(`Location in RED traffic area (no nearby traffic sources)`)
-  return 25 + Math.random() * 20 // 25-45
+  // Calculate base score using proximity-weighted algorithm
+  const baseScore = calculateProximityScore(coords, nearby, trafficWeights, 800)
+  
+  // Add density bonus for high-traffic areas
+  const highTrafficPlaces = nearby.filter(place =>
+    place.types?.some(type => ['shopping_mall', 'transit_station', 'restaurant'].includes(type))
+  ).length
+  
+  const densityBonus = Math.min(20, highTrafficPlaces * 3)
+  
+  // Apply stable random variation (±5%)
+  const variation = (stableRandom() - 0.5) * 10
+  
+  const finalScore = Math.max(10, Math.min(95, baseScore + densityBonus + variation))
+  
+  console.log(`Foot Traffic Score: base=${baseScore.toFixed(1)}, density=${densityBonus}, final=${finalScore.toFixed(1)}`)
+  return Math.round(finalScore)
 }
 
-// Function to determine safety score based on circular areas
-const getSafetyScore = (coords: { lat: number; lng: number }, nearby: google.maps.places.PlaceResult[]): number => {
-  // Define safe areas (green zones)
-  const safetyFactors = nearby.filter((place) =>
-    place.types?.some((t: string) =>
-      [
-        "hospital",
-        "police",
-        "school",
-        "university",
-        "transit_station",
-        "bus_station",
-        "train_station",
-        "fire_station",
-      ].includes(t),
-    ),
-  )
-
-  // Define moderate risk areas (yellow zones)
-  const moderateRiskFactors = nearby.filter((place) =>
-    place.types?.some((t: string) => ["night_club", "bar", "liquor_store"].includes(t)),
-  )
-
-  console.log(`Safety factors: ${safetyFactors.length}, Risk factors: ${moderateRiskFactors.length}`)
-
-  // Check if location falls within green areas (safe zones)
-  for (const factor of safetyFactors) {
-    if (factor.geometry?.location) {
-      const distance = calculateDistance(
-        coords.lat,
-        coords.lng,
-        factor.geometry.location.lat,
-        factor.geometry.location.lng,
-      )
-
-      const isMajorSafety = factor.types?.some((t) => ["hospital", "police", "fire_station"].includes(t))
-      const radius = isMajorSafety ? 500 : 350
-
-      // If within radius of safety factor = green area
-      if (distance <= radius) {
-        console.log(`Location in GREEN safety area (${distance}m from ${factor.name})`)
-        return 85 + Math.random() * 10 // 85-95
-      }
-    }
+// Enhanced safety scoring with multiple safety indicators
+const getSafetyScore = (
+  coords: { lat: number; lng: number }, 
+  nearby: google.maps.places.PlaceResult[]
+): number => {
+  const stableRandom = createStableRandom(coords.lat, coords.lng, "safety")
+  
+  // Define safety factors with weights
+  const safetyWeights: Record<string, number> = {
+    'police': 1.0,
+    'hospital': 0.9,
+    'fire_station': 0.8,
+    'school': 0.7,
+    'university': 0.7,
+    'transit_station': 0.6,
+    'bus_station': 0.5,
+    'train_station': 0.6,
+    'pharmacy': 0.4,
+    'bank': 0.4
   }
 
-  // Check if location falls within yellow areas (moderate risk)
-  for (const risk of moderateRiskFactors) {
-    if (risk.geometry?.location) {
-      const distance = calculateDistance(coords.lat, coords.lng, risk.geometry.location.lat, risk.geometry.location.lng)
-
-      // If within 250m of risk factor = yellow area
-      if (distance <= 250) {
-        console.log(`Location in YELLOW safety area (${distance}m from ${risk.name})`)
-        return 50 + Math.random() * 10 // 50-60
-      }
-    }
+  // Risk factors (negative weights)
+  const riskWeights: Record<string, number> = {
+    'night_club': -0.6,
+    'bar': -0.4,
+    'liquor_store': -0.3
   }
 
-  // Check if close to any safety factor (extended green area)
-  for (const factor of safetyFactors) {
-    if (factor.geometry?.location) {
-      const distance = calculateDistance(
-        coords.lat,
-        coords.lng,
-        factor.geometry.location.lat,
-        factor.geometry.location.lng,
-      )
-
-      // If within 800m of safety factor = extended green area
-      if (distance <= 800) {
-        console.log(`Location in extended GREEN safety area (${distance}m from ${factor.name})`)
-        return 75 + Math.random() * 10 // 75-85
-      }
-    }
-  }
-
-  // Default: Red area (higher risk)
-  console.log(`Location in RED safety area (no nearby safety factors)`)
-  return 30 + Math.random() * 15 // 30-45
+  // Calculate positive safety score
+  const safetyScore = calculateProximityScore(coords, nearby, safetyWeights, 1000)
+  
+  // Calculate risk penalty
+  const riskPenalty = Math.abs(calculateProximityScore(coords, nearby, riskWeights, 500))
+  
+  // Base safety score starts at 70 (neutral)
+  const baseScore = 70
+  const adjustedScore = baseScore + (safetyScore * 0.3) - (riskPenalty * 0.2)
+  
+  // Apply stable random variation (±3%)
+  const variation = (stableRandom() - 0.5) * 6
+  
+  const finalScore = Math.max(20, Math.min(95, adjustedScore + variation))
+  
+  console.log(`Safety Score: base=${baseScore}, safety=${safetyScore.toFixed(1)}, risk=${riskPenalty.toFixed(1)}, final=${finalScore.toFixed(1)}`)
+  return Math.round(finalScore)
 }
 
+// Enhanced accessibility scoring
+const getAccessibilityScore = (transitStations: google.maps.places.PlaceResult[]): number => {
+  const transitCount = transitStations.length
+  
+  // Logarithmic scaling for diminishing returns
+  const baseScore = Math.min(90, 30 + (Math.log(transitCount + 1) * 20))
+  
+  // Bonus for variety of transit types
+  const transitTypes = new Set()
+  transitStations.forEach(station => {
+    station.types?.forEach(type => {
+      if (['bus_station', 'train_station', 'subway_station', 'transit_station'].includes(type)) {
+        transitTypes.add(type)
+      }
+    })
+  })
+  
+  const varietyBonus = transitTypes.size * 5
+  
+  const finalScore = Math.max(15, Math.min(95, baseScore + varietyBonus))
+  
+  console.log(`Accessibility Score: count=${transitCount}, base=${baseScore.toFixed(1)}, variety=${varietyBonus}, final=${finalScore.toFixed(1)}`)
+  return Math.round(finalScore)
+}
+
+// Enhanced competition scoring with market saturation analysis
+const getCompetitionScore = (
+  coords: { lat: number; lng: number },
+  relevantCompetitors: google.maps.places.PlaceResult[]
+): number => {
+  const stableRandom = createStableRandom(coords.lat, coords.lng, "competition")
+  
+  const competitorCount = relevantCompetitors.length
+  
+  // Calculate competition density in different radius zones
+  const zones = [
+    { radius: 200, weight: 1.0 },
+    { radius: 500, weight: 0.7 },
+    { radius: 1000, weight: 0.4 }
+  ]
+  
+  let competitionPressure = 0
+  
+  zones.forEach(zone => {
+    const competitorsInZone = relevantCompetitors.filter(comp => {
+      if (!comp.geometry?.location) return false
+      const distance = calculateDistance(
+        coords.lat, coords.lng,
+        comp.geometry.location.lat, comp.geometry.location.lng
+      )
+      return distance <= zone.radius
+    }).length
+    
+    competitionPressure += competitorsInZone * zone.weight
+  })
+  
+  // Convert competition pressure to score (inverse relationship)
+  let baseScore = 90
+  if (competitionPressure > 0) {
+    baseScore = Math.max(20, 90 - (competitionPressure * 8))
+  }
+  
+  // Apply stable random variation (±4%)
+  const variation = (stableRandom() - 0.5) * 8
+  
+  const finalScore = Math.max(15, Math.min(95, baseScore + variation))
+  
+  console.log(`Competition Score: count=${competitorCount}, pressure=${competitionPressure.toFixed(1)}, final=${finalScore.toFixed(1)}`)
+  return Math.round(finalScore)
+}
+
+// Main scoring function with enhanced stability
 export const generateConsistentScore = (
   coords: { lat: number; lng: number },
   nearby: google.maps.places.PlaceResult[],
@@ -293,83 +331,114 @@ export const generateConsistentScore = (
 ) => {
   const bizType = typeof window !== "undefined" ? localStorage.getItem("businessType") : null
 
-  console.log(`Generating score for coordinates: ${coords.lat}, ${coords.lng}`)
-  console.log(`Found ${nearby.length} nearby places`)
-  console.log(`Found ${transitStations.length} transit stations`)
+  console.log(`=== Generating score for coordinates: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)} ===`)
+  console.log(`Found ${nearby.length} nearby places, ${transitStations.length} transit stations`)
 
-  // 1️⃣  Buckets
-  const byType = (needle: string[]) => nearby.filter((p) => p.types?.some((t) => needle.includes(t)))
-  const allComps = byType(["store", "restaurant", "shop", "establishment", "shopping_mall", "gym", "fitness_center"])
-  const relevantComps = bizType && bizMap[bizType] ? byType(bizMap[bizType]) : allComps
+  // Filter relevant competitors based on business type
+  const allComps = nearby.filter((p) => 
+    p.types?.some((t) => ["store", "restaurant", "shop", "establishment", "shopping_mall"].includes(t))
+  )
+  const relevantComps = bizType && bizMap[bizType] ? 
+    nearby.filter((p) => p.types?.some((t) => bizMap[bizType].includes(t))) : 
+    allComps
 
-  // 2️⃣  Use new scoring mechanisms
-  const foot = Math.round(getFootTrafficScore(coords, nearby))
-  const safe = Math.round(getSafetyScore(coords, nearby))
-  const acc = Math.round(getAccessibilityScore(transitStations))
+  // Calculate individual factor scores
+  const footTraffic = getFootTrafficScore(coords, nearby)
+  const safety = getSafetyScore(coords, nearby)
+  const accessibility = getAccessibilityScore(transitStations)
+  const competition = getCompetitionScore(coords, relevantComps)
 
-  console.log(`Foot traffic score: ${foot}`)
-  console.log(`Safety score: ${safe}`)
-  console.log(`Accessibility score: ${acc}`)
+  const factors: Factors = { 
+    footTraffic, 
+    safety, 
+    competition, 
+    accessibility 
+  }
 
-  // Competition scoring (unchanged - based on competitor count)
-  const compCnt = relevantComps.length
-  let comp = compCnt === 0 ? 95 : compCnt <= 2 ? 90 : compCnt <= 5 ? 75 : compCnt <= 10 ? 60 : compCnt <= 20 ? 45 : 30
+  // Calculate weighted average (can be adjusted for different business types)
+  const weights = {
+    footTraffic: 0.3,
+    safety: 0.2,
+    competition: 0.25,
+    accessibility: 0.25
+  }
 
-  // Location-specific competition variation
-  const seed = Math.abs(Math.sin(coords.lat * 12.9898 + coords.lng * 78.233) * 43758.5453)
-  const compVariation = Math.sin(seed * 75) * 6
-  comp = Math.max(0, Math.min(95, Math.round(comp + compVariation)))
+  const weightedScore = (
+    footTraffic * weights.footTraffic +
+    safety * weights.safety +
+    competition * weights.competition +
+    accessibility * weights.accessibility
+  )
 
-  console.log(`Competition score: ${comp} (${compCnt} competitors)`)
+  // Calculate stability metrics
+  const scores = [footTraffic, safety, competition, accessibility]
+  const mean = scores.reduce((a, b) => a + b, 0) / scores.length
+  const variance = scores.reduce((acc, score) => acc + Math.pow(score - mean, 2), 0) / scores.length
+  const standardDeviation = Math.sqrt(variance)
+  
+  const consistencyScore = Math.max(0, 100 - (standardDeviation * 2))
+  const dataQuality = Math.min(100, (nearby.length / 50) * 100)
+  const confidenceLevel = Math.min(100, (consistencyScore + dataQuality) / 2)
 
-  const factors: Factors = { footTraffic: foot, safety: safe, competition: comp, accessibility: acc }
+  const finalScore = Math.round(weightedScore)
 
-  // 3️⃣  Final score is the AVERAGE of all four factors
-  const final = (foot + safe + comp + acc) / 4
+  console.log(`=== Final Scores ===`)
+  console.log(`Foot Traffic: ${footTraffic}`)
+  console.log(`Safety: ${safety}`)
+  console.log(`Competition: ${competition}`)
+  console.log(`Accessibility: ${accessibility}`)
+  console.log(`Weighted Average: ${finalScore}`)
+  console.log(`Consistency: ${consistencyScore.toFixed(1)}`)
 
-  console.log(`Final score (average): ${Math.round(final)}`)
-
-  // 4️⃣  Diagnostics
+  // Generate detailed analysis
   const details: DetailedAnalysis = {
-    hourlyTraffic: genHourly(foot, () => Math.random()),
-    weeklyTrends: genWeekly(foot, () => Math.random()),
+    hourlyTraffic: genHourly(footTraffic, createStableRandom(coords.lat, coords.lng, "hourly")),
+    weeklyTrends: genWeekly(footTraffic, createStableRandom(coords.lat, coords.lng, "weekly")),
     competitorAnalysis: {
-      total: compCnt,
-      density: compCnt > 20 ? "High" : compCnt > 10 ? "Medium" : "Low",
+      total: relevantComps.length,
+      density: relevantComps.length > 15 ? "High" : relevantComps.length > 8 ? "Medium" : "Low",
       types: relevantComps.reduce<Record<string, number>>((m, p) => {
         const t = p.types?.[0] ?? "other"
         m[t] = (m[t] ?? 0) + 1
         return m
       }, {}),
+      marketSaturation: relevantComps.length > 20 ? "Saturated" : relevantComps.length > 10 ? "Competitive" : "Open"
     },
     safetyMetrics: {
-      crimeRate: 100 - safe,
-      lighting: safe > 80 ? "Excellent" : safe > 60 ? "Good" : "Poor",
-      surveillance: transitStations.length > 2 ? "High" : transitStations.length ? "Medium" : "Low",
+      crimeRisk: safety < 40 ? "High" : safety < 70 ? "Medium" : "Low",
+      lighting: safety > 80 ? "Excellent" : safety > 60 ? "Good" : "Poor",
+      surveillance: transitStations.length > 3 ? "High" : transitStations.length > 1 ? "Medium" : "Low",
+      emergencyServices: nearby.filter(p => p.types?.some(t => ["hospital", "police", "fire_station"].includes(t))).length
     },
     locationFactors: {
-      restaurants: byType(["restaurant", "cafe"]).length,
+      restaurants: nearby.filter(p => p.types?.includes("restaurant")).length,
       transit: transitStations.length,
-      hospitals: byType(["hospital", "doctor"]).length,
-      schools: byType(["school", "university"]).length,
-      shopping: byType(["shopping_mall", "department_store"]).length,
+      healthcare: nearby.filter(p => p.types?.some(t => ["hospital", "pharmacy", "doctor"].includes(t))).length,
+      education: nearby.filter(p => p.types?.some(t => ["school", "university"].includes(t))).length,
+      shopping: nearby.filter(p => p.types?.some(t => ["shopping_mall", "store"].includes(t))).length,
+      entertainment: nearby.filter(p => p.types?.some(t => ["movie_theater", "amusement_park", "casino"].includes(t))).length
     },
+    stabilityMetrics: {
+      consistencyScore: Math.round(consistencyScore),
+      dataQuality: Math.round(dataQuality),
+      confidenceLevel: Math.round(confidenceLevel)
+    }
   }
 
-  return { score: Math.round(final), factors, detailedAnalysis: details }
+  return { score: finalScore, factors, detailedAnalysis: details }
 }
 
 // -------------------------------------------------------------------
-//  tiny helpers – chart data generators
+//  Chart data generators with stable randomization
 // -------------------------------------------------------------------
 const genHourly = (base: number, rnd: () => number) =>
   Array.from({ length: 24 }, (_, h) => {
     const mult = h < 6 ? 0.3 : h < 10 ? 0.7 : h < 17 ? 0.9 : h < 21 ? 1 : h < 24 ? 0.6 : 0.3
     return {
       hour: `${h.toString().padStart(2, "0")}:00`,
-      pedestrians: Math.round(base * mult + rnd() * 12 - 6),
-      vehicles: Math.round(base * 0.8 * mult + rnd() * 10 - 5),
-      safety: Math.round(85 - (h >= 22 || h <= 5 ? 15 : 0) + rnd() * 8 - 4),
+      pedestrians: Math.max(5, Math.round(base * mult + (rnd() - 0.5) * 12)),
+      vehicles: Math.max(2, Math.round(base * 0.8 * mult + (rnd() - 0.5) * 10)),
+      safety: Math.max(30, Math.round(85 - (h >= 22 || h <= 5 ? 15 : 0) + (rnd() - 0.5) * 8)),
     }
   })
 
@@ -379,23 +448,23 @@ const genWeekly = (base: number, rnd: () => number) => {
     const mult = d === "Sat" ? 1.2 : d === "Sun" ? 0.85 : d === "Fri" ? 1.1 : d === "Mon" ? 0.9 : 1
     return {
       day: d,
-      traffic: Math.round(base * mult + rnd() * 6 - 3),
-      sales: Math.round(base * mult * 0.7 + rnd() * 5 - 2),
-      competition: Math.round(70 + rnd() * 15 - 7),
+      traffic: Math.max(10, Math.round(base * mult + (rnd() - 0.5) * 6)),
+      sales: Math.max(5, Math.round(base * mult * 0.7 + (rnd() - 0.5) * 5)),
+      competition: Math.max(20, Math.round(70 + (rnd() - 0.5) * 15)),
     }
   })
 }
 
 // -------------------------------------------------------------------
-//  UI helpers (used by <AnalysisPage/>)
+//  UI helpers
 // -------------------------------------------------------------------
-export const colorFor = (s: number) => (s >= 72 ? "text-emerald-400" : s >= 60 ? "text-yellow-400" : "text-red-400")
+export const colorFor = (s: number) => (s >= 75 ? "text-emerald-400" : s >= 60 ? "text-yellow-400" : "text-red-400")
 
 export const bgFor = (s: number) =>
-  s >= 72
+  s >= 75
     ? "from-emerald-500/20 to-green-500/20"
     : s >= 60
       ? "from-yellow-500/20 to-orange-500/20"
       : "from-red-500/20 to-pink-500/20"
 
-export const labelFor = (s: number) => (s >= 72 ? "Excellent Location" : s >= 60 ? "Good Location" : "Risky for Credit")
+export const labelFor = (s: number) => (s >= 75 ? "Excellent Location" : s >= 60 ? "Good Location" : "Needs Improvement")
