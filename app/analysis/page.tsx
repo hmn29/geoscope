@@ -136,7 +136,7 @@ export default function AnalysisPage() {
 
   // Trigger confetti animation only once when score is loaded and above 70
   useEffect(() => {
-    if (!isLoading && geoScore > 0 && geoScore >= 70 && !confettiTriggered.current) {
+    if (!isLoading && geoScore > 0 && geoScore >= 80 && !confettiTriggered.current) {
       confettiTriggered.current = true
       
       // Create confetti effect
