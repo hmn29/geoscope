@@ -7,12 +7,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Users, Shield, Bus, TrendingUp, Clock, AlertCircle, Store, Train, Activity, BarChart3, Globe, ArrowLeft, MapPin, Star, TrendingDown, CheckCircle, Info, Zap, Target, ThumbsUp, AlertTriangle, ThumbsDown, Cuboid as Cube, Map as MapIcon } from "lucide-react"
+  Users,
+  Shield,
+  Bus,
+  TrendingUp,
+  Clock,
+  AlertCircle,
+  Store,
+  Train,
+  Activity,
+  BarChart3,
+  Globe,
+  ArrowLeft,
+  MapPin,
+  Star,
+  TrendingDown,
+  CheckCircle,
+  Info,
+  Zap,
+  Target,
+  ChevronDown,
+  ChevronUp,
+  Building2,
+  Map,
+} from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MapView } from "@/components/map-view"
 import { BusinessTypeSelector } from "@/components/business-type-selector"
@@ -58,17 +76,23 @@ export default function AnalysisPage() {
   const [businessCategory, setBusinessCategory] = useState<string>("")
   const [showBusinessSelector, setShowBusinessSelector] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
+  const [confettiFired, setConfettiFired] = useState(false) // Track if confetti has already fired
   const [animationActive, setAnimationActive] = useState(false)
   const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 })
-  const [scoreAnimated, setScoreAnimated] = useState(false)
   const [is3DMode, setIs3DMode] = useState(false)
+  
+  // Accordion states for location intelligence overview
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    quickStats: false,
+    transitStations: false,
+    nearbyAmenities: false,
+  })
 
   const hourlyChartRef = useRef<HTMLCanvasElement>(null)
   const weeklyChartRef = useRef<HTMLCanvasElement>(null)
   const hourlyChartInstance = useRef<any>(null)
   const weeklyChartInstance = useRef<any>(null)
 
-  // Initialize window size and animation state on component mount
   useEffect(() => {
     const timer = setTimeout(() => {
       setAnimationActive(true)
@@ -102,7 +126,6 @@ export default function AnalysisPage() {
     }
   }, [])
 
-  // Define analysis factors with enhanced descriptions and trend indicators
   const factors = realTimeData
     ? [
         {
@@ -111,7 +134,7 @@ export default function AnalysisPage() {
           score: realTimeData.footTraffic || 0,
           icon: Users,
           color: "from-emerald-500 to-green-400",
-          description: "Pedestrian flow and activity levels throughout the day",
+          description: "Pedestrian flow and activity levels",
           trend: realTimeData.footTraffic > 70 ? "up" : realTimeData.footTraffic > 50 ? "stable" : "down"
         },
         {
@@ -120,7 +143,7 @@ export default function AnalysisPage() {
           score: realTimeData.safety || 0,
           icon: Shield,
           color: "from-blue-500 to-cyan-400",
-          description: "Security assessment based on crime data and safety infrastructure",
+          description: "Security and safety assessment",
           trend: realTimeData.safety > 70 ? "up" : realTimeData.safety > 50 ? "stable" : "down"
         },
         {
@@ -129,7 +152,7 @@ export default function AnalysisPage() {
           score: realTimeData.competition || 0,
           icon: TrendingUp,
           color: "from-orange-500 to-yellow-400",
-          description: "Market saturation and competitive landscape analysis",
+          description: "Market competition analysis",
           trend: realTimeData.competition > 70 ? "up" : realTimeData.competition > 50 ? "stable" : "down"
         },
         {
@@ -138,35 +161,31 @@ export default function AnalysisPage() {
           score: realTimeData.accessibility || 0,
           icon: Bus,
           color: "from-purple-500 to-pink-400",
-          description: "Public transport connectivity and ease of access",
+          description: "Transit and accessibility features",
           trend: realTimeData.accessibility > 70 ? "up" : realTimeData.accessibility > 50 ? "stable" : "down"
         },
       ]
     : []
 
-  // Generate realistic hourly traffic patterns based on location data
   const generateHourlyData = () => {
     const baseTraffic = realTimeData?.footTraffic || 75
     const baseSafety = realTimeData?.safety || 75
 
     return Array.from({ length: 24 }, (_, i) => {
       const hour = i
-      let trafficMultiplier = 0.3 // Default low traffic for night hours
-
-      // Define traffic patterns based on typical business hours
-      if (hour >= 6 && hour <= 9)
-        trafficMultiplier = 0.7 // Morning rush
-      else if (hour >= 10 && hour <= 16)
-        trafficMultiplier = 0.9 // Business hours
-      else if (hour >= 17 && hour <= 20)
-        trafficMultiplier = 1.0 // Evening peak
-      else if (hour >= 21 && hour <= 23) 
-        trafficMultiplier = 0.6 // Evening wind-down
-
-      // Safety adjustments based on time of day
+      let trafficMultiplier = 0.3 
       let safetyAdjustment = 0
-      if (hour >= 22 || hour <= 5) safetyAdjustment = -15 // Night hours less safe
-      else if (hour >= 6 && hour <= 18) safetyAdjustment = 5 // Daytime safer
+
+      if (hour >= 6 && hour <= 9)
+        trafficMultiplier = 0.7 
+      else if (hour >= 10 && hour <= 16)
+        trafficMultiplier = 0.9 
+      else if (hour >= 17 && hour <= 20)
+        trafficMultiplier = 1.0 
+      else if (hour >= 21 && hour <= 23) trafficMultiplier = 0.6 
+
+      if (hour >= 22 || hour <= 5) safetyAdjustment = -15
+      else if (hour >= 6 && hour <= 18) safetyAdjustment = 5
 
       const pedestrians = Math.max(10, Math.round(baseTraffic * trafficMultiplier + Math.sin(hour * 0.5) * 8))
       const vehicles = Math.max(5, Math.round(baseTraffic * trafficMultiplier * 0.8 + Math.cos(hour * 0.3) * 6))
@@ -181,7 +200,6 @@ export default function AnalysisPage() {
     })
   }
 
-  // Generate weekly business performance trends
   const generateWeeklyData = () => {
     const baseTraffic = realTimeData?.footTraffic || 75
     const baseCompetition = realTimeData?.competition || 75
@@ -191,18 +209,17 @@ export default function AnalysisPage() {
       let trafficMultiplier = 1.0
       let salesMultiplier = 0.7
 
-      // Weekend and weekday patterns
       if (day === "Sat") {
-        trafficMultiplier = 1.3 // Saturday peak
+        trafficMultiplier = 1.3
         salesMultiplier = 0.9
       } else if (day === "Sun") {
-        trafficMultiplier = 0.8 // Sunday slower
+        trafficMultiplier = 0.8
         salesMultiplier = 0.6
       } else if (day === "Mon") {
-        trafficMultiplier = 0.85 // Monday startup
+        trafficMultiplier = 0.85
         salesMultiplier = 0.65
       } else if (day === "Fri") {
-        trafficMultiplier = 1.2 // Friday boost
+        trafficMultiplier = 1.2
         salesMultiplier = 0.85
       }
 
@@ -219,7 +236,6 @@ export default function AnalysisPage() {
     })
   }
 
-  // Initialize Chart.js charts for data visualization
   const initializeCharts = async () => {
     if (typeof window === "undefined" || !realTimeData) return
 
@@ -229,7 +245,6 @@ export default function AnalysisPage() {
     const hourlyData = generateHourlyData()
     const weeklyData = generateWeeklyData()
 
-    // Clean up existing chart instances
     if (hourlyChartInstance.current) {
       hourlyChartInstance.current.destroy()
     }
@@ -237,7 +252,6 @@ export default function AnalysisPage() {
       weeklyChartInstance.current.destroy()
     }
 
-    // Create hourly traffic pattern chart
     if (hourlyChartRef.current) {
       const ctx = hourlyChartRef.current.getContext("2d")
       if (ctx) {
@@ -327,7 +341,6 @@ export default function AnalysisPage() {
       }
     }
 
-    // Create weekly performance trends chart
     if (weeklyChartRef.current) {
       const ctx = weeklyChartRef.current.getContext("2d")
       if (ctx) {
@@ -412,7 +425,6 @@ export default function AnalysisPage() {
     }
   }
 
-  // Initialize charts when data is available
   useEffect(() => {
     if (realTimeData && !isLoading) {
       const timer = setTimeout(() => {
@@ -423,7 +435,6 @@ export default function AnalysisPage() {
     }
   }, [realTimeData, isLoading])
 
-  // Cleanup chart instances on component unmount
   useEffect(() => {
     return () => {
       if (hourlyChartInstance.current) {
@@ -435,16 +446,16 @@ export default function AnalysisPage() {
     }
   }, [])
 
-  // Trigger confetti animation for high scores
+  // Fixed confetti effect - only fires once when score is 75+ and loading is complete
   useEffect(() => {
-    if (geoScore >= 75 && !isLoading && !scoreAnimated) {
+    if (geoScore >= 75 && !isLoading && !confettiFired) {
       setShowConfetti(true)
+      setConfettiFired(true) // Mark confetti as fired to prevent re-triggering
       const timer = setTimeout(() => setShowConfetti(false), 3000)
       return () => clearTimeout(timer)
     }
-  }, [geoScore, isLoading, scoreAnimated])
+  }, [geoScore, isLoading, confettiFired])
 
-  // Business type mapping for competitor analysis
   const businessTypeMapping: Record<string, string[]> = {
     food_service: ["restaurant", "cafe", "bakery", "meal_takeaway", "food"],
     retail: ["store", "clothing_store", "shoe_store", "book_store", "electronics_store"],
@@ -457,7 +468,6 @@ export default function AnalysisPage() {
     education: ["school", "university", "library", "tutoring"],
   }
 
-  // Main data fetching function with comprehensive error handling
   const fetchRealTimeData = async () => {
     try {
       setError(null)
@@ -476,7 +486,6 @@ export default function AnalysisPage() {
       const locationKey = locationKeyFromAddress(location)
       const existingData = getLocationData(locationKey)
 
-      // Use cached data if available and not seeded
       if (existingData && !existingData.isSeeded) {
         setCoordinates(existingData.coordinates)
         setGeoScore(existingData.score)
@@ -496,7 +505,6 @@ export default function AnalysisPage() {
         })
         setNearbyPlaces(existingData.nearbyPlaces)
 
-        // Fetch transit data separately as it might not be cached
         const transitResponse = await fetch(
           `/api/transit?lat=${existingData.coordinates.lat}&lng=${existingData.coordinates.lng}&radius=2000`,
         )
@@ -509,7 +517,6 @@ export default function AnalysisPage() {
         return
       }
 
-      // Geocode the address to get precise coordinates
       const geocodeResponse = await fetch(`/api/geocode?address=${encodeURIComponent(location)}`)
 
       if (!geocodeResponse.ok) {
@@ -528,7 +535,6 @@ export default function AnalysisPage() {
 
       setCoordinates({ lat, lng })
 
-      // Fetch nearby places and transit data in parallel for better performance
       const [placesResponse, transitResponse] = await Promise.all([
         fetch(`/api/places?lat=${lat}&lng=${lng}&radius=2000&type=establishment`),
         fetch(`/api/transit?lat=${lat}&lng=${lng}&radius=2000`),
@@ -547,7 +553,6 @@ export default function AnalysisPage() {
         setTransitStations(transitData.results || [])
       }
 
-      // Generate comprehensive location analysis
       const analysisResult = generateConsistentScore(
         { lat, lng },
         placesData.results || [],
@@ -573,7 +578,6 @@ export default function AnalysisPage() {
 
       setRealTimeData(newData)
 
-      // Cache the analysis results for future use
       const locationData = {
         location: actualAddress,
         coordinates: { lat, lng },
@@ -591,7 +595,6 @@ export default function AnalysisPage() {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
       setError(errorMessage)
 
-      // Reset state on error
       setGeoScore(0)
       setRealTimeData(null)
       setNearbyPlaces([])
@@ -602,12 +605,10 @@ export default function AnalysisPage() {
     }
   }
 
-  // Fetch data on component mount
   useEffect(() => {
     fetchRealTimeData()
   }, [])
 
-  // Handle business type selection
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedBusinessType = localStorage.getItem("businessType")
@@ -629,7 +630,6 @@ export default function AnalysisPage() {
     }
   }
 
-  // Filter competitors based on selected business type
   const relevantCompetitors =
     businessType && businessTypeMapping[businessType]
       ? nearbyPlaces.filter((place) => place.types?.some((t: string) => businessTypeMapping[businessType].includes(t)))
@@ -637,48 +637,21 @@ export default function AnalysisPage() {
           place.types?.some((t: string) => ["store", "restaurant", "shop", "establishment"].includes(t)),
         )
 
-  // Generate smart suggestions based on GeoScore
-  const getSmartSuggestions = () => {
-    if (geoScore >= 75) {
-      return {
-        icon: ThumbsUp,
-        color: "text-green-400",
-        bgColor: "bg-green-900/20",
-        borderColor: "border-green-500/30",
-        title: "Excellent Location Choice",
-        message: "This location shows strong potential for business success with high foot traffic and good accessibility."
-      }
-    } else if (geoScore >= 50) {
-      return {
-        icon: AlertTriangle,
-        color: "text-yellow-400",
-        bgColor: "bg-yellow-900/20",
-        borderColor: "border-yellow-500/30",
-        title: "Good Location with Room for Improvement",
-        message: "Consider strategies to boost foot traffic or improve accessibility to maximize potential."
-      }
-    } else {
-      return {
-        icon: ThumbsDown,
-        color: "text-red-400",
-        bgColor: "bg-red-900/20",
-        borderColor: "border-red-500/30",
-        title: "High Risk Location",
-        message: "This location may face challenges. Consider alternative locations or significant marketing investment."
-      }
-    }
+  // Toggle accordion sections
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
   }
 
-  const suggestions = getSmartSuggestions()
-
-  // Animated background with floating elements
+  // Enhanced background with Earth visualization
   const EarthBackground = () => (
     <div className="absolute inset-0 overflow-hidden">
-      {/* Main Earth Visualization */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{
-          opacity: animationActive ? 0.04 : 0,
+          opacity: animationActive ? 0.06 : 0,
           scale: animationActive ? 1 : 0.8,
           rotate: animationActive ? 360 : 0,
         }}
@@ -692,7 +665,6 @@ export default function AnalysisPage() {
         <ThreeDVisualization type="hero" className="w-full h-full" />
       </motion.div>
 
-      {/* Floating orbs with subtle glow effects */}
       {Array.from({ length: 3 }).map((_, i) => (
         <motion.div
           key={`orb-${i}`}
@@ -722,7 +694,6 @@ export default function AnalysisPage() {
         />
       ))}
 
-      {/* Floating particles for ambient effect */}
       {Array.from({ length: 15 }).map((_, i) => (
         <motion.div
           key={`particle-${i}`}
@@ -756,7 +727,7 @@ export default function AnalysisPage() {
     </div>
   )
 
-  // Confetti animation for celebrating high scores
+  // Fixed confetti animation - only shows when triggered
   const ConfettiAnimation = () => {
     if (!showConfetti) return null
 
@@ -788,13 +759,12 @@ export default function AnalysisPage() {
     )
   }
 
-  // Error state with retry functionality
   if (error || (coordinates === null && !isLoading)) {
     return (
       <div className="min-h-screen bg-slate-900 relative">
         <EarthBackground />
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="text-center p-8 bg-white/5 backdrop-blur-xl rounded-xl border border-white/20 max-w-md">
+          <div className="text-center p-8 bg-slate-800/50 rounded-xl border border-red-500/30 max-w-md backdrop-blur-xl">
             <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
             <h2 className="text-white text-2xl font-bold mb-4">Analysis Failed</h2>
             <p className="text-red-200 mb-6">{error || "Unable to analyze the selected location."}</p>
@@ -817,7 +787,6 @@ export default function AnalysisPage() {
     )
   }
 
-  // Loading state with animated indicators
   if (isLoading || !realTimeData) {
     return (
       <div className="min-h-screen bg-slate-900 relative">
@@ -838,20 +807,15 @@ export default function AnalysisPage() {
 
   return (
     <div className="min-h-screen bg-slate-900 relative">
-      {/* Animated background */}
       <EarthBackground />
-
-      {/* Confetti celebration */}
       <ConfettiAnimation />
 
-      {/* Business type selection modal */}
       <BusinessTypeSelector
         isOpen={showBusinessSelector}
         onClose={() => setShowBusinessSelector(false)}
         onSelect={handleBusinessTypeSelect}
       />
 
-      {/* Header with navigation and controls */}
       <header className="relative z-10 py-6 px-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
@@ -860,7 +824,7 @@ export default function AnalysisPage() {
             </div>
             <div className="ml-4">
               <h1 className="text-2xl font-bold text-white">GeoScope Credit</h1>
-              <p className="text-blue-300 text-sm">Location Intelligence Report</p>
+              <p className="text-blue-300">Location Intelligence Report</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
@@ -869,8 +833,8 @@ export default function AnalysisPage() {
               variant="outline"
               className={`border-purple-600 text-purple-300 hover:bg-purple-900/30 ${is3DMode ? 'bg-purple-900/30' : ''}`}
             >
-              {is3DMode ? <MapIcon className="w-4 h-4 mr-2" /> : <Cube className="w-4 h-4 mr-2" />}
-              {is3DMode ? '2D View' : '3D Buildings'}
+              {is3DMode ? <Map className="w-4 h-4 mr-2" /> : <Building2 className="w-4 h-4 mr-2" />}
+              {is3DMode ? '2D Map' : '3D Buildings'}
             </Button>
             <Button
               onClick={() => {
@@ -898,9 +862,8 @@ export default function AnalysisPage() {
         </div>
       </header>
 
-      {/* Main content area */}
       <div className="container mx-auto px-8 py-12 relative z-10">
-        {/* Hero section with enhanced score display */}
+        {/* Enhanced Hero Section */}
         <div className="flex flex-col lg:flex-row items-start justify-between mb-16 gap-12">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -908,7 +871,6 @@ export default function AnalysisPage() {
             transition={{ delay: 0.3, duration: 0.8 }}
             className="lg:w-1/2"
           >
-            {/* Location header with status indicators */}
             <div className="mb-8">
               <div className="flex items-center space-x-3 mb-4">
                 <MapPin className="w-6 h-6 text-cyan-400" />
@@ -916,139 +878,90 @@ export default function AnalysisPage() {
               </div>
               <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 leading-tight">{selectedLocation}</h3>
               
-              {/* Status badges */}
               <div className="flex flex-wrap items-center gap-3 mb-6">
-                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
+                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                   <span className="text-green-400 text-sm font-medium">Live Analysis</span>
                 </div>
                 {businessCategory && (
-                  <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
                     <Store className="w-4 h-4 text-purple-400" />
                     <span className="text-purple-400 text-sm font-medium">{businessCategory}</span>
                   </div>
                 )}
-                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
+                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
                   <Globe className="w-4 h-4 text-blue-400" />
                   <span className="text-blue-400 text-sm font-medium">
                     {coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)}
                   </span>
                 </div>
+                {realTimeData?.detailedAnalysis?.stabilityMetrics && (
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
+                    <Target className="w-4 h-4 text-yellow-400" />
+                    <span className="text-yellow-400 text-sm font-medium">
+                      {realTimeData.detailedAnalysis.stabilityMetrics.confidenceLevel}% Confidence
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Enhanced circular score display */}
-            <Card className={`bg-white/5 backdrop-blur-xl border border-white/20 relative overflow-hidden mb-8`}>
+            {/* Enhanced Score Display */}
+            <Card className={`bg-white/10 backdrop-blur-xl border border-white/20 relative overflow-hidden mb-8`}>
               <CardContent className="p-8">
                 <div className="text-center">
-                  <div className="flex items-center justify-center space-x-3 mb-6">
+                  <div className="flex items-center justify-center space-x-3 mb-4">
                     <Zap className="w-8 h-8 text-cyan-400" />
                     <h4 className="text-2xl font-bold text-white">GeoScope Score</h4>
                   </div>
-                  
-                  {/* Circular progress indicator */}
-                  <div className="relative w-48 h-48 mx-auto mb-6">
-                    <svg className="w-48 h-48 transform -rotate-90" viewBox="0 0 200 200">
-                      {/* Background circle */}
-                      <circle
-                        cx="100"
-                        cy="100"
-                        r="80"
-                        stroke="rgba(255,255,255,0.1)"
-                        strokeWidth="12"
-                        fill="none"
-                      />
-                      {/* Progress circle */}
-                      <motion.circle
-                        cx="100"
-                        cy="100"
-                        r="80"
-                        stroke={geoScore >= 75 ? "#10b981" : geoScore >= 50 ? "#f59e0b" : "#ef4444"}
-                        strokeWidth="12"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeDasharray={`${2 * Math.PI * 80}`}
-                        initial={{ strokeDashoffset: 2 * Math.PI * 80 }}
-                        animate={{ 
-                          strokeDashoffset: !scoreAnimated ? 2 * Math.PI * 80 * (1 - geoScore / 100) : 2 * Math.PI * 80 * (1 - geoScore / 100)
-                        }}
-                        transition={{ duration: 2, ease: "easeOut" }}
-                        onAnimationComplete={() => setScoreAnimated(true)}
-                        className="drop-shadow-lg"
-                        style={{
-                          filter: `drop-shadow(0 0 8px ${geoScore >= 75 ? "#10b981" : geoScore >= 50 ? "#f59e0b" : "#ef4444"}40)`
-                        }}
-                      />
-                    </svg>
-                    {/* Score number in center */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-                        className={`text-6xl font-bold ${colorFor(geoScore)}`}
-                      >
-                        {geoScore}
-                      </motion.div>
-                    </div>
-                  </div>
-
-                  {/* Score label and slider */}
-                  <Badge variant="outline" className={`${colorFor(geoScore)} border-current text-lg px-4 py-2 mb-6`}>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                    className={`text-8xl font-bold ${colorFor(geoScore)} mb-4`}
+                  >
+                    {geoScore}
+                  </motion.div>
+                  <Badge variant="outline" className={`${colorFor(geoScore)} border-current text-lg px-4 py-2 mb-4`}>
                     {labelFor(geoScore)}
                   </Badge>
                   
-                  {/* Enhanced score slider */}
                   <div className="mt-6">
-                    <div className="flex justify-between text-sm text-gray-300 mb-3">
-                      <span className="text-red-400">Poor</span>
-                      <span className="text-yellow-400">Average</span>
-                      <span className="text-green-400">Excellent</span>
+                    <div className="flex justify-between text-sm text-gray-300 mb-2">
+                      <span>Poor</span>
+                      <span>Good</span>
+                      <span>Excellent</span>
                     </div>
-                    <div className="relative h-4 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full overflow-hidden">
-                      <div className="absolute inset-0 bg-black/30 rounded-full"></div>
-                      <motion.div
-                        className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-gray-300"
-                        initial={{ left: "0%" }}
-                        animate={{ left: `${geoScore}%` }}
-                        transition={{ duration: 2, ease: "easeOut" }}
-                        style={{ marginLeft: "-12px" }}
-                      />
-                      {/* Scale markers */}
-                      {[0, 25, 50, 75, 100].map((mark) => (
-                        <div
-                          key={mark}
-                          className="absolute top-0 bottom-0 w-0.5 bg-white/50"
-                          style={{ left: `${mark}%` }}
-                        />
-                      ))}
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>0</span>
-                      <span>25</span>
-                      <span>50</span>
-                      <span>75</span>
-                      <span>100</span>
-                    </div>
+                    <Progress value={geoScore} className="h-3 bg-slate-700" />
                   </div>
+
+                  {realTimeData?.detailedAnalysis?.stabilityMetrics && (
+                    <div className="mt-6 grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-sm text-gray-300">Consistency</div>
+                        <div className="text-lg font-bold text-white">
+                          {realTimeData.detailedAnalysis.stabilityMetrics.consistencyScore}%
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-300">Data Quality</div>
+                        <div className="text-lg font-bold text-white">
+                          {realTimeData.detailedAnalysis.stabilityMetrics.dataQuality}%
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-300">Confidence</div>
+                        <div className="text-lg font-bold text-white">
+                          {realTimeData.detailedAnalysis.stabilityMetrics.confidenceLevel}%
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Smart suggestions based on score */}
-            <Card className={`${suggestions.bgColor} border ${suggestions.borderColor} backdrop-blur-xl mb-8`}>
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <suggestions.icon className={`w-8 h-8 ${suggestions.color} flex-shrink-0 mt-1`} />
-                  <div>
-                    <h4 className={`text-lg font-bold ${suggestions.color} mb-2`}>{suggestions.title}</h4>
-                    <p className="text-white/80">{suggestions.message}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Enhanced factor grid */}
+            {/* Enhanced Factor Grid */}
             <div className="grid grid-cols-2 gap-4">
               {factors.map((factor, index) => (
                 <motion.div
@@ -1056,8 +969,8 @@ export default function AnalysisPage() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.6 + index * 0.1 }}
-                  className={`bg-white/5 backdrop-blur-xl p-6 rounded-2xl text-white cursor-pointer transition-all duration-300 hover:scale-105 shadow-lg relative overflow-hidden border border-white/20 ${
-                    activeLayer === factor.id ? 'ring-2 ring-cyan-400 bg-white/10' : ''
+                  className={`bg-white/10 backdrop-blur-xl p-6 rounded-2xl text-white cursor-pointer transition-all duration-300 hover:scale-105 shadow-lg relative overflow-hidden border border-white/20 ${
+                    activeLayer === factor.id ? 'ring-2 ring-cyan-400' : ''
                   }`}
                   onClick={() => setActiveLayer(factor.id)}
                 >
@@ -1071,35 +984,27 @@ export default function AnalysisPage() {
                   <div className="text-sm opacity-90 mb-2">{factor.name}</div>
                   <Progress value={factor.score} className="h-2 bg-white/20" />
                   
-                  {/* Active indicator */}
-                  {activeLayer === factor.id && (
-                    <div className="absolute inset-0 bg-cyan-400/10 flex items-center justify-center">
-                      <span className="text-sm font-medium text-cyan-300">Active Layer</span>
-                    </div>
-                  )}
+                  <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="text-sm font-medium">View on Map</span>
+                  </div>
                 </motion.div>
               ))}
             </div>
           </motion.div>
 
-          {/* Enhanced map section with 3D support */}
+          {/* Enhanced Map Section */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="lg:w-1/2 h-[900px]"
+            className="lg:w-1/2 h-[800px]"
           >
-            <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg h-full">
+            <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg h-full">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-white flex items-center space-x-2">
                     <Activity className="w-5 h-5 text-green-400" />
                     <span>Interactive Analysis Map</span>
-                    {is3DMode && (
-                      <Badge variant="outline" className="border-purple-400 text-purple-400 ml-2">
-                        3D Buildings
-                      </Badge>
-                    )}
                   </CardTitle>
                   <div className="flex items-center space-x-2">
                     <Badge variant="outline" className="border-cyan-400 text-cyan-400">
@@ -1114,7 +1019,7 @@ export default function AnalysisPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 h-[775px]">
+              <CardContent className="p-6 h-full">
                 <MapView
                   coordinates={coordinates}
                   selectedLocation={selectedLocation}
@@ -1137,7 +1042,7 @@ export default function AnalysisPage() {
           transition={{ delay: 0.8 }}
           className="mb-16"
         >
-          <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
+          <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg">
             <CardHeader>
               <CardTitle className="text-white flex items-center space-x-2">
                 <BarChart3 className="w-5 h-5 text-cyan-400" />
@@ -1147,139 +1052,219 @@ export default function AnalysisPage() {
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <Accordion type="single" collapsible className="w-full space-y-4">
-                <AccordionItem value="quick-stats" className="border border-white/10 rounded-lg bg-white/5 backdrop-blur-xl">
-                  <AccordionTrigger className="px-6 py-4 text-white hover:text-cyan-300">
-                    <div className="flex items-center space-x-3">
-                      <Target className="w-5 h-5 text-cyan-400" />
-                      <span className="text-lg font-semibold">Quick Statistics</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
-                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                        <Store className="w-8 h-8 text-orange-400 mx-auto mb-2" />
-                        <div className="text-white font-bold text-2xl">{relevantCompetitors.length}</div>
-                        <div className="text-cyan-300 text-sm">Competitors</div>
-                      </div>
-                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                        <Train className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                        <div className="text-white font-bold text-2xl">{transitStations.length}</div>
-                        <div className="text-cyan-300 text-sm">Transit</div>
-                      </div>
-                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                        <Users className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                        <div className="text-white font-bold text-2xl">{realTimeData?.footTraffic || 0}</div>
-                        <div className="text-cyan-300 text-sm">Traffic Score</div>
-                      </div>
-                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                        <Shield className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-                        <div className="text-white font-bold text-2xl">{realTimeData?.safety || 0}</div>
-                        <div className="text-cyan-300 text-sm">Safety Score</div>
-                      </div>
-                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                        <TrendingUp className="w-8 h-8 text-orange-400 mx-auto mb-2" />
-                        <div className="text-white font-bold text-2xl">{realTimeData?.competition || 0}</div>
-                        <div className="text-cyan-300 text-sm">Competition</div>
-                      </div>
-                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                        <Bus className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                        <div className="text-white font-bold text-2xl">{realTimeData?.accessibility || 0}</div>
-                        <div className="text-cyan-300 text-sm">Accessibility</div>
-                      </div>
-                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                        <Activity className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
-                        <div className="text-white font-bold text-2xl">{nearbyPlaces.length}</div>
-                        <div className="text-cyan-300 text-sm">Total Places</div>
-                      </div>
-                      <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                        <Star className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
-                        <div className="text-white font-bold text-2xl">
-                          {Math.round((nearbyPlaces.filter(p => p.rating).reduce((sum, p) => sum + (p.rating || 0), 0) / nearbyPlaces.filter(p => p.rating).length) * 10) / 10 || 0}
-                        </div>
-                        <div className="text-cyan-300 text-sm">Avg Rating</div>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="transit-details" className="border border-white/10 rounded-lg bg-white/5 backdrop-blur-xl">
-                  <AccordionTrigger className="px-6 py-4 text-white hover:text-cyan-300">
-                    <div className="flex items-center space-x-3">
-                      <Train className="w-5 h-5 text-purple-400" />
-                      <span className="text-lg font-semibold">Transit Stations ({transitStations.length})</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-4">
-                    {transitStations.length > 0 ? (
-                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {transitStations.slice(0, 6).map((station, index) => (
-                          <div key={index} className="bg-white/5 backdrop-blur-xl rounded-lg p-4 border border-white/10">
-                            <div className="flex items-start space-x-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                station.types?.includes('train_station') || station.types?.includes('subway_station') 
-                                  ? 'bg-purple-500' : 'bg-blue-500'
-                              }`}>
-                                {station.types?.includes('train_station') || station.types?.includes('subway_station') ? '🚊' : '🚌'}
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="text-white font-semibold text-sm">{station.name}</h4>
-                                <p className="text-white/60 text-xs mt-1">{station.vicinity}</p>
-                                <Badge variant="outline" className="text-xs mt-2 border-purple-400 text-purple-400">
-                                  {station.types?.includes('train_station') ? 'Train' : 
-                                   station.types?.includes('subway_station') ? 'Subway' : 'Bus'}
-                                </Badge>
-                              </div>
-                            </div>
+            <CardContent className="p-6 space-y-4">
+              {/* Quick Statistics Accordion */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10">
+                <button
+                  onClick={() => toggleSection('quickStats')}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <BarChart3 className="w-5 h-5 text-cyan-400" />
+                    <span className="text-white font-semibold">Quick Statistics</span>
+                    <Badge variant="outline" className="border-cyan-400 text-cyan-400 text-xs">
+                      {nearbyPlaces.length + transitStations.length} Data Points
+                    </Badge>
+                  </div>
+                  {expandedSections.quickStats ? (
+                    <ChevronUp className="w-5 h-5 text-white/60" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-white/60" />
+                  )}
+                </button>
+                <AnimatePresence>
+                  {expandedSections.quickStats && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="border-t border-white/10"
+                    >
+                      <div className="p-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
+                          <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors">
+                            <Store className="w-8 h-8 text-orange-400 mx-auto mb-2" />
+                            <div className="text-white font-bold text-2xl">{relevantCompetitors.length}</div>
+                            <div className="text-cyan-300 text-sm">Competitors</div>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <Train className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-white/60">No transit stations found within 2km radius</p>
-                      </div>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="nearby-amenities" className="border border-white/10 rounded-lg bg-white/5 backdrop-blur-xl">
-                  <AccordionTrigger className="px-6 py-4 text-white hover:text-cyan-300">
-                    <div className="flex items-center space-x-3">
-                      <MapPin className="w-5 h-5 text-green-400" />
-                      <span className="text-lg font-semibold">Nearby Amenities ({nearbyPlaces.length})</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-4">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {nearbyPlaces.slice(0, 9).map((place, index) => (
-                        <div key={index} className="bg-white/5 backdrop-blur-xl rounded-lg p-4 border border-white/10">
-                          <div className="flex items-start space-x-3">
-                            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
-                              {place.types?.includes('restaurant') ? '🍽️' :
-                               place.types?.includes('store') ? '🏪' :
-                               place.types?.includes('hospital') ? '🏥' :
-                               place.types?.includes('school') ? '🏫' : '🏢'}
+                          <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors">
+                            <Train className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                            <div className="text-white font-bold text-2xl">{transitStations.length}</div>
+                            <div className="text-cyan-300 text-sm">Transit</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors">
+                            <Users className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                            <div className="text-white font-bold text-2xl">{realTimeData?.footTraffic || 0}</div>
+                            <div className="text-cyan-300 text-sm">Traffic Score</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors">
+                            <Shield className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+                            <div className="text-white font-bold text-2xl">{realTimeData?.safety || 0}</div>
+                            <div className="text-cyan-300 text-sm">Safety Score</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors">
+                            <TrendingUp className="w-8 h-8 text-orange-400 mx-auto mb-2" />
+                            <div className="text-white font-bold text-2xl">{realTimeData?.competition || 0}</div>
+                            <div className="text-cyan-300 text-sm">Competition</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors">
+                            <Bus className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                            <div className="text-white font-bold text-2xl">{realTimeData?.accessibility || 0}</div>
+                            <div className="text-cyan-300 text-sm">Accessibility</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors">
+                            <Activity className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+                            <div className="text-white font-bold text-2xl">{nearbyPlaces.length}</div>
+                            <div className="text-cyan-300 text-sm">Total Places</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors">
+                            <Star className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
+                            <div className="text-white font-bold text-2xl">
+                              {realTimeData?.detailedAnalysis?.stabilityMetrics?.confidenceLevel || 0}%
                             </div>
-                            <div className="flex-1">
-                              <h4 className="text-white font-semibold text-sm">{place.name}</h4>
-                              <p className="text-white/60 text-xs mt-1">{place.vicinity}</p>
-                              {place.rating && (
-                                <div className="flex items-center space-x-1 mt-2">
-                                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                                  <span className="text-yellow-400 text-xs">{place.rating}</span>
-                                  <span className="text-white/40 text-xs">({place.user_ratings_total || 0})</span>
+                            <div className="text-cyan-300 text-sm">Confidence</div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Transit Stations Accordion */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10">
+                <button
+                  onClick={() => toggleSection('transitStations')}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Train className="w-5 h-5 text-purple-400" />
+                    <span className="text-white font-semibold">Transit Stations</span>
+                    <Badge variant="outline" className="border-purple-400 text-purple-400 text-xs">
+                      {transitStations.length} Stations
+                    </Badge>
+                  </div>
+                  {expandedSections.transitStations ? (
+                    <ChevronUp className="w-5 h-5 text-white/60" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-white/60" />
+                  )}
+                </button>
+                <AnimatePresence>
+                  {expandedSections.transitStations && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="border-t border-white/10"
+                    >
+                      <div className="p-4">
+                        {transitStations.length > 0 ? (
+                          <div className="grid md:grid-cols-2 gap-3">
+                            {transitStations.slice(0, 6).map((station, index) => (
+                              <div key={index} className="bg-white/5 backdrop-blur-xl rounded-lg p-3 border border-white/10">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                    station.types?.includes('train_station') || station.types?.includes('subway_station')
+                                      ? 'bg-purple-500/20 text-purple-400'
+                                      : 'bg-blue-500/20 text-blue-400'
+                                  }`}>
+                                    {station.types?.includes('train_station') || station.types?.includes('subway_station') ? '🚊' : '🚌'}
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="text-white font-medium text-sm">{station.name}</h4>
+                                    <p className="text-white/60 text-xs">{station.vicinity}</p>
+                                    <div className="flex items-center space-x-2 mt-1">
+                                      <Badge variant="outline" className="text-xs border-white/20 text-white/60">
+                                        {station.types?.includes('train_station') || station.types?.includes('subway_station') ? 'Rail' : 'Bus'}
+                                      </Badge>
+                                    </div>
+                                  </div>
                                 </div>
-                              )}
-                            </div>
+                              </div>
+                            ))}
                           </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <Train className="w-12 h-12 text-white/30 mx-auto mb-3" />
+                            <p className="text-white/60">No transit stations found within 2km radius</p>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Nearby Amenities Accordion */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10">
+                <button
+                  onClick={() => toggleSection('nearbyAmenities')}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Store className="w-5 h-5 text-green-400" />
+                    <span className="text-white font-semibold">Nearby Amenities</span>
+                    <Badge variant="outline" className="border-green-400 text-green-400 text-xs">
+                      {nearbyPlaces.length} Places
+                    </Badge>
+                  </div>
+                  {expandedSections.nearbyAmenities ? (
+                    <ChevronUp className="w-5 h-5 text-white/60" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-white/60" />
+                  )}
+                </button>
+                <AnimatePresence>
+                  {expandedSections.nearbyAmenities && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="border-t border-white/10"
+                    >
+                      <div className="p-4">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                          {nearbyPlaces.slice(0, 12).map((place, index) => (
+                            <div key={index} className="bg-white/5 backdrop-blur-xl rounded-lg p-3 border border-white/10">
+                              <div className="flex items-start space-x-3">
+                                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                  {place.types?.includes('restaurant') ? '🍽️' : 
+                                   place.types?.includes('store') ? '🏪' : 
+                                   place.types?.includes('hospital') ? '🏥' : 
+                                   place.types?.includes('school') ? '🏫' : '🏢'}
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="text-white font-medium text-sm leading-tight">{place.name}</h4>
+                                  <p className="text-white/60 text-xs mb-2">{place.vicinity}</p>
+                                  <div className="flex items-center justify-between">
+                                    <Badge variant="outline" className="text-xs border-white/20 text-white/60">
+                                      {place.types?.[0]?.replace(/_/g, ' ') || 'Business'}
+                                    </Badge>
+                                    {place.rating && (
+                                      <div className="flex items-center space-x-1">
+                                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                                        <span className="text-xs text-yellow-400">{place.rating}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+                        {nearbyPlaces.length > 12 && (
+                          <div className="mt-4 text-center">
+                            <Badge variant="outline" className="border-green-400 text-green-400">
+                              +{nearbyPlaces.length - 12} more places in the area
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -1291,8 +1276,7 @@ export default function AnalysisPage() {
           transition={{ delay: 1.2 }}
           className="grid lg:grid-cols-2 gap-8 mb-16"
         >
-          {/* 24-Hour Traffic Pattern */}
-          <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
+          <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg">
             <CardHeader>
               <CardTitle className="text-white flex items-center space-x-2">
                 <Clock className="w-5 h-5 text-cyan-400" />
@@ -1309,8 +1293,7 @@ export default function AnalysisPage() {
             </CardContent>
           </Card>
 
-          {/* Weekly Trends */}
-          <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
+          <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg">
             <CardHeader>
               <CardTitle className="text-white flex items-center space-x-2">
                 <TrendingUp className="w-5 h-5 text-green-400" />
@@ -1336,7 +1319,7 @@ export default function AnalysisPage() {
             transition={{ delay: 1.4 }}
             className="mb-16"
           >
-            <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
+            <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-white flex items-center space-x-2">
                   <Store className="w-5 h-5 text-orange-400" />
@@ -1402,7 +1385,7 @@ export default function AnalysisPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.8, duration: 0.8 }}
-          className="py-8 mt-16 border-t border-white/10"
+          className="py-8 mt-16 border-t border-white/20"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
