@@ -15,6 +15,7 @@ interface MapViewProps {
   activeLayer: string
   factors: any[]
   onLayerChange: (layer: string) => void
+  is3DMode?: boolean
 }
 
 export function MapView({
@@ -25,6 +26,7 @@ export function MapView({
   activeLayer,
   factors = [],
   onLayerChange,
+  is3DMode = false,
 }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<any>(null)
@@ -82,7 +84,7 @@ export function MapView({
     return explanation
   }
 
-  // Initialize Google Maps with proper loading management
+  // Initialize Google Maps with proper loading management and 3D support
   useEffect(() => {
     let isMounted = true
 
@@ -103,7 +105,7 @@ export function MapView({
           throw new Error("Map container not available")
         }
 
-        console.log("Creating map instance")
+        console.log("Creating map instance with 3D support")
 
         // Clear existing markers and overlays
         markers.forEach((marker) => marker.setMap(null))
@@ -113,11 +115,14 @@ export function MapView({
           setOverlays([])
         }
 
-        // Create map instance with enhanced dark theme
+        // Create map instance with enhanced dark theme and 3D support
         const mapInstance = new window.google.maps.Map(mapRef.current, {
           center: coordinates,
-          zoom: 15,
-          styles: [
+          zoom: is3DMode ? 18 : 15,
+          mapTypeId: is3DMode ? 'satellite' : 'roadmap',
+          tilt: is3DMode ? 45 : 0,
+          heading: is3DMode ? 90 : 0,
+          styles: is3DMode ? [] : [
             // Enhanced dark theme with better contrast
             { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
             { elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
@@ -153,10 +158,12 @@ export function MapView({
           ],
           disableDefaultUI: true,
           zoomControl: true,
-          mapTypeControl: false,
+          mapTypeControl: is3DMode,
           streetViewControl: false,
           fullscreenControl: false,
           clickableIcons: false,
+          rotateControl: is3DMode,
+          tiltControl: is3DMode,
         })
 
         // Add main location marker (Enhanced RED PIN)
@@ -190,19 +197,22 @@ export function MapView({
 
         const newMarkers = [mainMarker]
 
-        // Add 2km analysis radius circle with enhanced styling
-        const radiusCircle = new window.google.maps.Circle({
-          strokeColor: "#3B82F6",
-          strokeOpacity: 0.8,
-          strokeWeight: 3,
-          fillColor: "#3B82F6",
-          fillOpacity: 0.08,
-          map: mapInstance,
-          center: coordinates,
-          radius: 2000,
-        })
+        // Add 2km analysis radius circle with enhanced styling (only in 2D mode)
+        let radiusCircle = null
+        if (!is3DMode) {
+          radiusCircle = new window.google.maps.Circle({
+            strokeColor: "#3B82F6",
+            strokeOpacity: 0.8,
+            strokeWeight: 3,
+            fillColor: "#3B82F6",
+            fillOpacity: 0.08,
+            map: mapInstance,
+            center: coordinates,
+            radius: 2000,
+          })
+        }
 
-        const newOverlays = [radiusCircle]
+        const newOverlays = radiusCircle ? [radiusCircle] : []
 
         // Add nearby places markers with enhanced info windows
         const infoWindow = new window.google.maps.InfoWindow()
@@ -303,11 +313,11 @@ export function MapView({
       markers.forEach((marker) => marker.setMap(null))
       overlays.forEach((overlay) => overlay.setMap(null))
     }
-  }, [coordinates, selectedLocation, mapLoadAttempts, locationKey])
+  }, [coordinates, selectedLocation, mapLoadAttempts, locationKey, is3DMode])
 
-  // Update overlays based on active layer with enhanced visualizations
+  // Update overlays based on active layer with enhanced visualizations (only in 2D mode)
   useEffect(() => {
-    if (!map || !window.google) return
+    if (!map || !window.google || is3DMode) return
 
     // Clear existing overlays except radius circle and main marker
     overlays.slice(1).forEach((overlay) => overlay.setMap(null))
@@ -625,7 +635,7 @@ export function MapView({
 
     setOverlays(newOverlays)
     setMarkers(newMarkers)
-  }, [activeLayer, map, nearbyPlaces, transitStations, coordinates, locationKey])
+  }, [activeLayer, map, nearbyPlaces, transitStations, coordinates, locationKey, is3DMode])
 
   const handleRetry = () => {
     setMapLoadAttempts((prev) => prev + 1)
@@ -637,7 +647,7 @@ export function MapView({
         <div className="absolute inset-0 flex items-center justify-center bg-white/5 backdrop-blur-xl z-10 rounded-2xl">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white text-lg">Loading interactive map...</p>
+            <p className="text-white text-lg">Loading {is3DMode ? '3D' : 'interactive'} map...</p>
             <p className="text-cyan-300 text-sm mt-2">Fetching location data...</p>
           </div>
         </div>
@@ -662,7 +672,7 @@ export function MapView({
       <div ref={mapRef} className="w-full h-full" />
 
       {/* Enhanced Parameter Info */}
-      {!mapLoadError && !isMapLoading && safeFactor && (
+      {!mapLoadError && !isMapLoading && safeFactor && !is3DMode && (
         <div className="absolute top-6 right-6">
           <Card className="bg-white/10 backdrop-blur-xl border border-white/20 max-w-sm">
             <CardHeader className="pb-3">
@@ -701,8 +711,8 @@ export function MapView({
         </div>
       )}
 
-      {/* Enhanced Legend */}
-      {!mapLoadError && !isMapLoading && (
+      {/* Enhanced Legend (only in 2D mode) */}
+      {!mapLoadError && !isMapLoading && !is3DMode && (
         <div className="absolute bottom-6 left-6 bg-white/10 backdrop-blur-xl rounded-xl p-4 border border-white/20 max-w-xs">
           <h4 className="text-white font-semibold mb-3 flex items-center">
             <div className="w-2 h-2 bg-cyan-400 rounded-full mr-2 animate-pulse"></div>
@@ -787,6 +797,16 @@ export function MapView({
               <div className="w-4 h-4 border-2 border-cyan-400 rounded-full"></div>
               <span className="text-white/80">2km Analysis Area</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3D Mode Indicator */}
+      {is3DMode && !mapLoadError && !isMapLoading && (
+        <div className="absolute top-6 left-6 bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/20">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+            <span className="text-white font-medium text-sm">3D Satellite View</span>
           </div>
         </div>
       )}
