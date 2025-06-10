@@ -180,73 +180,34 @@ export function MapView({
           }, 1000)
         }
 
-        // Use AdvancedMarkerElement instead of deprecated Marker
-        let mainMarker
-        if (window.google.maps.marker?.AdvancedMarkerElement) {
-          // Create a custom marker element
-          const markerElement = document.createElement('div')
-          markerElement.innerHTML = `
-            <div style="
-              width: 60px;
-              height: 75px;
-              background: url('data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-                <svg width="60" height="75" viewBox="0 0 60 75" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                      <feMerge> 
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                      </feMerge>
-                    </filter>
-                  </defs>
-                  <path d="M30 0C13.431 0 0 13.431 0 30c0 22.5 30 45 30 45s30-22.5 30-45C60 13.431 46.569 0 30 0z" fill="#EF4444" filter="url(#glow)"/>
-                  <circle cx="30" cy="30" r="15" fill="#FFFFFF"/>
-                  <circle cx="30" cy="30" r="8" fill="#EF4444"/>
-                  <circle cx="30" cy="30" r="3" fill="#FFFFFF"/>
-                </svg>
-              `)}') no-repeat center center;
-              background-size: contain;
-            ">
-            </div>
-          `
-
-          mainMarker = new window.google.maps.marker.AdvancedMarkerElement({
-            position: coordinates,
-            map: mapInstance,
-            title: selectedLocation,
-            content: markerElement,
-          })
-        } else {
-          // Fallback to regular Marker if AdvancedMarkerElement is not available
-          mainMarker = new window.google.maps.Marker({
-            position: coordinates,
-            map: mapInstance,
-            title: selectedLocation,
-            icon: {
-              url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-                <svg width="60" height="75" viewBox="0 0 60 75" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                      <feMerge> 
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                      </feMerge>
-                    </filter>
-                  </defs>
-                  <path d="M30 0C13.431 0 0 13.431 0 30c0 22.5 30 45 30 45s30-22.5 30-45C60 13.431 46.569 0 30 0z" fill="#EF4444" filter="url(#glow)"/>
-                  <circle cx="30" cy="30" r="15" fill="#FFFFFF"/>
-                  <circle cx="30" cy="30" r="8" fill="#EF4444"/>
-                  <circle cx="30" cy="30" r="3" fill="#FFFFFF"/>
-                </svg>
-              `)}`,
-              scaledSize: new window.google.maps.Size(60, 75),
-              anchor: new window.google.maps.Point(30, 75),
-            },
-            zIndex: 1000,
-          })
-        }
+        // Add main location marker with enhanced design
+        const mainMarker = new window.google.maps.Marker({
+          position: coordinates,
+          map: mapInstance,
+          title: selectedLocation,
+          icon: {
+            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+              <svg width="60" height="75" viewBox="0 0 60 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge> 
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <path d="M30 0C13.431 0 0 13.431 0 30c0 22.5 30 45 30 45s30-22.5 30-45C60 13.431 46.569 0 30 0z" fill="#EF4444" filter="url(#glow)"/>
+                <circle cx="30" cy="30" r="15" fill="#FFFFFF"/>
+                <circle cx="30" cy="30" r="8" fill="#EF4444"/>
+                <circle cx="30" cy="30" r="3" fill="#FFFFFF"/>
+              </svg>
+            `)}`,
+            scaledSize: new window.google.maps.Size(60, 75),
+            anchor: new window.google.maps.Point(30, 75),
+          },
+          zIndex: 1000,
+        })
 
         const newMarkers = [mainMarker]
 
