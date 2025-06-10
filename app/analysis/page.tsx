@@ -26,11 +26,12 @@ import {
   Info,
   Zap,
   Target,
-  Map,
-  Layers3,
   ThumbsUp,
   AlertTriangle,
-  TrendingDown as RiskyIcon,
+  XCircle,
+  Map as MapIcon,
+  Layers3,
+  Eye,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MapView } from "@/components/map-view"
@@ -67,7 +68,6 @@ export default function AnalysisPage() {
   const [selectedLocation, setSelectedLocation] = useState("")
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [geoScore, setGeoScore] = useState(0)
-  const [scoreAnimated, setScoreAnimated] = useState(false)
   const [activeLayer, setActiveLayer] = useState("footHeat")
   const [isLoading, setIsLoading] = useState(true)
   const [realTimeData, setRealTimeData] = useState<any>(null)
@@ -80,6 +80,7 @@ export default function AnalysisPage() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [animationActive, setAnimationActive] = useState(false)
   const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 })
+  const [scoreAnimated, setScoreAnimated] = useState(false)
   const [is3DMode, setIs3DMode] = useState(false)
 
   const hourlyChartRef = useRef<HTMLCanvasElement>(null)
@@ -120,16 +121,6 @@ export default function AnalysisPage() {
     }
   }, [])
 
-  // Trigger score animation only once when score is set
-  useEffect(() => {
-    if (geoScore > 0 && !scoreAnimated && !isLoading) {
-      const timer = setTimeout(() => {
-        setScoreAnimated(true)
-      }, 500)
-      return () => clearTimeout(timer)
-    }
-  }, [geoScore, scoreAnimated, isLoading])
-
   const factors = realTimeData
     ? [
         {
@@ -137,7 +128,7 @@ export default function AnalysisPage() {
           name: "Foot Traffic",
           score: realTimeData.footTraffic || 0,
           icon: Users,
-          color: "from-emerald-500 to-green-400",
+          color: "from-emerald-400 to-green-500",
           description: "Pedestrian flow and activity levels",
           trend: realTimeData.footTraffic > 70 ? "up" : realTimeData.footTraffic > 50 ? "stable" : "down"
         },
@@ -146,7 +137,7 @@ export default function AnalysisPage() {
           name: "Safety",
           score: realTimeData.safety || 0,
           icon: Shield,
-          color: "from-blue-500 to-cyan-400",
+          color: "from-blue-400 to-cyan-500",
           description: "Security and safety assessment",
           trend: realTimeData.safety > 70 ? "up" : realTimeData.safety > 50 ? "stable" : "down"
         },
@@ -155,7 +146,7 @@ export default function AnalysisPage() {
           name: "Competition",
           score: realTimeData.competition || 0,
           icon: TrendingUp,
-          color: "from-orange-500 to-yellow-400",
+          color: "from-orange-400 to-yellow-500",
           description: "Market competition analysis",
           trend: realTimeData.competition > 70 ? "up" : realTimeData.competition > 50 ? "stable" : "down"
         },
@@ -164,7 +155,7 @@ export default function AnalysisPage() {
           name: "Accessibility",
           score: realTimeData.accessibility || 0,
           icon: Bus,
-          color: "from-purple-500 to-pink-400",
+          color: "from-purple-400 to-pink-500",
           description: "Transit and accessibility features",
           trend: realTimeData.accessibility > 70 ? "up" : realTimeData.accessibility > 50 ? "stable" : "down"
         },
@@ -451,12 +442,12 @@ export default function AnalysisPage() {
   }, [])
 
   useEffect(() => {
-    if (geoScore >= 75 && !isLoading) {
+    if (geoScore >= 75 && !isLoading && !scoreAnimated) {
       setShowConfetti(true)
       const timer = setTimeout(() => setShowConfetti(false), 3000)
       return () => clearTimeout(timer)
     }
-  }, [geoScore, isLoading])
+  }, [geoScore, isLoading, scoreAnimated])
 
   const businessTypeMapping: Record<string, string[]> = {
     food_service: ["restaurant", "cafe", "bakery", "meal_takeaway", "food"],
@@ -632,10 +623,9 @@ export default function AnalysisPage() {
     }
   }
 
-  // Handle layer change without reloading score
   const handleLayerChange = (layer: string) => {
     setActiveLayer(layer)
-    // Don't reload the score or data
+    // Don't reload the score, just change the layer
   }
 
   const relevantCompetitors =
@@ -645,37 +635,34 @@ export default function AnalysisPage() {
           place.types?.some((t: string) => ["store", "restaurant", "shop", "establishment"].includes(t)),
         )
 
-  // Get suggestion based on score
+  // Enhanced suggestions based on score
   const getSuggestion = (score: number) => {
     if (score >= 75) {
       return {
         type: "good",
         icon: ThumbsUp,
         color: "text-green-400",
-        bgColor: "bg-green-500/20",
-        borderColor: "border-green-500/30",
-        title: "Excellent Location",
-        message: "This location shows strong potential for business success with high scores across key metrics."
+        bgColor: "bg-green-900/20 border-green-500/30",
+        title: "Excellent Location!",
+        message: "This location shows strong potential for business success with high scores across all factors."
       }
     } else if (score >= 50) {
       return {
         type: "average",
         icon: AlertTriangle,
         color: "text-yellow-400",
-        bgColor: "bg-yellow-500/20",
-        borderColor: "border-yellow-500/30",
-        title: "Average Location",
-        message: "This location has moderate potential. Consider improvements in lower-scoring areas."
+        bgColor: "bg-yellow-900/20 border-yellow-500/30",
+        title: "Good Location with Room for Improvement",
+        message: "Consider strategies to boost foot traffic or improve accessibility to maximize potential."
       }
     } else {
       return {
         type: "risky",
-        icon: RiskyIcon,
+        icon: XCircle,
         color: "text-red-400",
-        bgColor: "bg-red-500/20",
-        borderColor: "border-red-500/30",
-        title: "Risky Location",
-        message: "This location may face challenges. Careful planning and strategy will be essential."
+        bgColor: "bg-red-900/20 border-red-500/30",
+        title: "High Risk Location",
+        message: "This location may face challenges. Consider alternative locations or significant mitigation strategies."
       }
     }
   }
@@ -686,7 +673,7 @@ export default function AnalysisPage() {
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{
-          opacity: animationActive ? 0.06 : 0,
+          opacity: animationActive ? 0.03 : 0,
           scale: animationActive ? 1 : 0.8,
           rotate: animationActive ? 360 : 0,
         }}
@@ -700,42 +687,12 @@ export default function AnalysisPage() {
         <ThreeDVisualization type="hero" className="w-full h-full" />
       </motion.div>
 
-      {/* Glowing Orbs */}
-      {Array.from({ length: 3 }).map((_, i) => (
-        <motion.div
-          key={`orb-${i}`}
-          className={`absolute w-32 h-32 rounded-full bg-gradient-to-r ${
-            i % 2 === 0 ? "from-blue-500/5 to-cyan-500/3" : "from-purple-500/5 to-pink-500/3"
-          }`}
-          initial={{
-            x: Math.random() * windowSize.width,
-            y: Math.random() * windowSize.height,
-            scale: 0,
-          }}
-          animate={{
-            x: [Math.random() * windowSize.width, Math.random() * windowSize.width, Math.random() * windowSize.width],
-            y: [
-              Math.random() * windowSize.height,
-              Math.random() * windowSize.height,
-              Math.random() * windowSize.height,
-            ],
-            scale: animationActive ? [0, 1, 0.5, 1, 0] : 0,
-          }}
-          transition={{
-            duration: 20 + Math.random() * 10,
-            times: [0, 0.2, 0.5, 0.8, 1],
-            repeat: Number.POSITIVE_INFINITY,
-            delay: i * 2,
-          }}
-        />
-      ))}
-
-      {/* Floating particles with trails */}
-      {Array.from({ length: 15 }).map((_, i) => (
+      {/* Floating particles */}
+      {Array.from({ length: 8 }).map((_, i) => (
         <motion.div
           key={`particle-${i}`}
           className={`absolute w-1 h-1 rounded-full ${
-            i % 3 === 0 ? "bg-blue-400/50" : i % 3 === 1 ? "bg-cyan-400/50" : "bg-purple-400/50"
+            i % 3 === 0 ? "bg-blue-400/30" : i % 3 === 1 ? "bg-cyan-400/30" : "bg-purple-400/30"
           }`}
           initial={{
             x: Math.random() * windowSize.width,
@@ -750,7 +707,7 @@ export default function AnalysisPage() {
               Math.random() * windowSize.height,
               Math.random() * windowSize.height,
             ],
-            opacity: animationActive ? [0, 0.7, 0] : 0,
+            opacity: animationActive ? [0, 0.5, 0] : 0,
             scale: animationActive ? [0, 1, 0] : 0,
           }}
           transition={{
@@ -800,7 +757,7 @@ export default function AnalysisPage() {
       <div className="min-h-screen bg-slate-900 relative">
         <EarthBackground />
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="text-center p-8 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 max-w-md">
+          <div className="text-center p-8 bg-white/5 backdrop-blur-xl rounded-xl border border-white/20 max-w-md">
             <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
             <h2 className="text-white text-2xl font-bold mb-4">Analysis Failed</h2>
             <p className="text-red-200 mb-6">{error || "Unable to analyze the selected location."}</p>
@@ -858,33 +815,26 @@ export default function AnalysisPage() {
         onSelect={handleBusinessTypeSelect}
       />
 
-      <header className="relative z-10 py-6 px-8">
+      <header className="relative z-10 py-4 px-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="rounded-full overflow-hidden border-4 border-blue-500 shadow-lg shadow-blue-500/30 w-16 h-16">
-              <Image src="/logo.png" alt="GeoScope Credit Logo" width={64} height={64} className="object-cover" />
+            <div className="rounded-full overflow-hidden border-2 border-blue-500 shadow-lg shadow-blue-500/30 w-12 h-12">
+              <Image src="/logo.png" alt="GeoScope Credit Logo" width={48} height={48} className="object-cover" />
             </div>
-            <div className="ml-4">
-              <h1 className="text-3xl font-bold text-white">GeoScope Credit</h1>
-              <p className="text-blue-300">Location Intelligence Report</p>
+            <div className="ml-3">
+              <h1 className="text-2xl font-bold text-white">GeoScope</h1>
+              <p className="text-blue-300 text-sm">Location Intelligence</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <Button
               onClick={() => setIs3DMode(!is3DMode)}
               variant="outline"
+              size="sm"
               className={`border-purple-600 text-purple-300 hover:bg-purple-900/30 ${is3DMode ? 'bg-purple-900/50' : ''}`}
             >
-              {is3DMode ? <Map className="w-4 h-4 mr-2" /> : <Layers3 className="w-4 h-4 mr-2" />}
-              {is3DMode ? '2D Map' : '3D Map'}
-            </Button>
-            <Button
-              onClick={() => router.push("/docs")}
-              variant="outline"
-              className="border-blue-600 text-blue-300 hover:bg-blue-900/30"
-            >
-              <Info className="w-4 h-4 mr-2" />
-              Documentation
+              {is3DMode ? <Eye className="w-4 h-4 mr-2" /> : <Layers3 className="w-4 h-4 mr-2" />}
+              {is3DMode ? '2D View' : '3D View'}
             </Button>
             <Button
               onClick={() => {
@@ -895,6 +845,7 @@ export default function AnalysisPage() {
                 router.push("/")
               }}
               variant="outline"
+              size="sm"
               className="border-cyan-600 text-cyan-300 hover:bg-cyan-900/30"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -913,38 +864,38 @@ export default function AnalysisPage() {
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-8 py-12 relative z-10">
+      <div className="container mx-auto px-6 py-8 relative z-10">
         {/* Hero Section with Enhanced Score Display */}
-        <div className="flex flex-col lg:flex-row items-start justify-between mb-16 gap-12">
+        <div className="flex flex-col xl:flex-row items-start justify-between mb-12 gap-8">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.8 }}
-            className="lg:w-1/2"
+            className="xl:w-1/2 space-y-6"
           >
             {/* Location Header */}
-            <div className="mb-8">
-              <div className="flex items-center space-x-3 mb-4">
-                <MapPin className="w-6 h-6 text-cyan-400" />
-                <h2 className="text-2xl text-cyan-300">Analysis Complete</h2>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <MapPin className="w-5 h-5 text-cyan-400" />
+                <h2 className="text-xl text-cyan-300">Analysis Complete</h2>
               </div>
-              <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 leading-tight">{selectedLocation}</h3>
+              <h3 className="text-xl md:text-2xl font-bold text-white leading-tight">{selectedLocation}</h3>
               
               {/* Status Badges */}
-              <div className="flex flex-wrap items-center gap-3 mb-6">
-                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-3 py-1 border border-white/20">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-green-400 text-sm font-medium">Google Maps Data</span>
+                  <span className="text-green-400 text-xs font-medium">Live Analysis</span>
                 </div>
                 {businessCategory && (
-                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
-                    <Store className="w-4 h-4 text-purple-400" />
-                    <span className="text-purple-400 text-sm font-medium">{businessCategory}</span>
+                  <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-3 py-1 border border-white/20">
+                    <Store className="w-3 h-3 text-purple-400" />
+                    <span className="text-purple-400 text-xs font-medium">{businessCategory}</span>
                   </div>
                 )}
-                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl rounded-full px-4 py-2 border border-white/20">
-                  <Globe className="w-4 h-4 text-blue-400" />
-                  <span className="text-blue-400 text-sm font-medium">
+                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl rounded-full px-3 py-1 border border-white/20">
+                  <Globe className="w-3 h-3 text-blue-400" />
+                  <span className="text-blue-400 text-xs font-medium">
                     {coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)}
                   </span>
                 </div>
@@ -952,69 +903,78 @@ export default function AnalysisPage() {
             </div>
 
             {/* Enhanced Circular Score Display */}
-            <Card className={`bg-white/5 backdrop-blur-xl border border-white/20 relative overflow-hidden mb-8`}>
-              <CardContent className="p-8">
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/20 relative overflow-hidden">
+              <CardContent className="p-6">
                 <div className="text-center">
-                  <div className="flex items-center justify-center space-x-3 mb-6">
-                    <Zap className="w-8 h-8 text-cyan-400" />
-                    <h4 className="text-2xl font-bold text-white">GeoScope Score</h4>
+                  <div className="flex items-center justify-center space-x-3 mb-4">
+                    <Zap className="w-6 h-6 text-cyan-400" />
+                    <h4 className="text-xl font-bold text-white">GeoScope Score</h4>
                   </div>
                   
-                  {/* Circular Score with SVG Animation */}
-                  <div className="relative w-48 h-48 mx-auto mb-6">
-                    <svg className="w-48 h-48 transform -rotate-90" viewBox="0 0 100 100">
-                      {/* Background circle */}
+                  {/* Circular Progress Score */}
+                  <div className="relative w-32 h-32 mx-auto mb-4">
+                    <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
                       <circle
-                        cx="50"
-                        cy="50"
-                        r="40"
+                        cx="60"
+                        cy="60"
+                        r="50"
                         stroke="rgba(255,255,255,0.1)"
                         strokeWidth="8"
                         fill="none"
                       />
-                      {/* Progress circle */}
                       <motion.circle
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        stroke={geoScore >= 75 ? "#10b981" : geoScore >= 50 ? "#f59e0b" : "#ef4444"}
+                        cx="60"
+                        cy="60"
+                        r="50"
+                        stroke={geoScore >= 75 ? "#10b981" : geoScore >= 60 ? "#f59e0b" : "#ef4444"}
                         strokeWidth="8"
                         fill="none"
                         strokeLinecap="round"
-                        strokeDasharray={`${2 * Math.PI * 40}`}
-                        initial={{ strokeDashoffset: 2 * Math.PI * 40 }}
-                        animate={scoreAnimated ? { 
-                          strokeDashoffset: 2 * Math.PI * 40 * (1 - geoScore / 100) 
-                        } : {}}
+                        strokeDasharray={`${2 * Math.PI * 50}`}
+                        initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
+                        animate={{ 
+                          strokeDashoffset: !scoreAnimated ? 2 * Math.PI * 50 * (1 - geoScore / 100) : 2 * Math.PI * 50 * (1 - geoScore / 100)
+                        }}
                         transition={{ duration: 2, ease: "easeOut" }}
+                        onAnimationComplete={() => setScoreAnimated(true)}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <motion.div
                         initial={{ scale: 0 }}
-                        animate={scoreAnimated ? { scale: 1 } : {}}
+                        animate={{ scale: 1 }}
                         transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-                        className={`text-6xl font-bold ${colorFor(geoScore)}`}
+                        className={`text-4xl font-bold ${colorFor(geoScore)}`}
                       >
-                        {scoreAnimated ? geoScore : 0}
+                        {geoScore}
                       </motion.div>
                     </div>
                   </div>
                   
-                  <Badge variant="outline" className={`${colorFor(geoScore)} border-current text-lg px-4 py-2 mb-4`}>
+                  <Badge variant="outline" className={`${colorFor(geoScore)} border-current text-base px-4 py-1 mb-4`}>
                     {labelFor(geoScore)}
                   </Badge>
+                  
+                  {/* Score Progress Bar */}
+                  <div className="mt-4">
+                    <div className="flex justify-between text-xs text-gray-300 mb-2">
+                      <span>Poor</span>
+                      <span>Good</span>
+                      <span>Excellent</span>
+                    </div>
+                    <Progress value={geoScore} className="h-2 bg-white/10" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Suggestion Card */}
-            <Card className={`${suggestion.bgColor} backdrop-blur-xl border ${suggestion.borderColor} mb-8`}>
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <suggestion.icon className={`w-8 h-8 ${suggestion.color} flex-shrink-0 mt-1`} />
+            <Card className={`${suggestion.bgColor} backdrop-blur-xl border`}>
+              <CardContent className="p-4">
+                <div className="flex items-start space-x-3">
+                  <suggestion.icon className={`w-6 h-6 ${suggestion.color} flex-shrink-0 mt-1`} />
                   <div>
-                    <h4 className={`text-lg font-bold ${suggestion.color} mb-2`}>{suggestion.title}</h4>
+                    <h4 className={`font-semibold ${suggestion.color} mb-1`}>{suggestion.title}</h4>
                     <p className="text-white/80 text-sm">{suggestion.message}</p>
                   </div>
                 </div>
@@ -1022,30 +982,32 @@ export default function AnalysisPage() {
             </Card>
 
             {/* Enhanced Factor Grid */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {factors.map((factor, index) => (
                 <motion.div
                   key={factor.id}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.6 + index * 0.1 }}
-                  className={`bg-gradient-to-br ${factor.color} p-6 rounded-2xl text-white cursor-pointer transition-all duration-300 hover:scale-105 shadow-lg relative overflow-hidden`}
+                  className={`bg-white/5 backdrop-blur-xl border border-white/20 p-4 rounded-xl text-white cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-white/10 relative overflow-hidden ${activeLayer === factor.id ? 'ring-2 ring-cyan-400' : ''}`}
                   onClick={() => handleLayerChange(factor.id)}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <factor.icon className="w-8 h-8" />
-                    {factor.trend === "up" && <TrendingUp className="w-5 h-5 text-green-200" />}
-                    {factor.trend === "down" && <TrendingDown className="w-5 h-5 text-red-200" />}
-                    {factor.trend === "stable" && <CheckCircle className="w-5 h-5 text-blue-200" />}
+                    <factor.icon className="w-6 h-6" />
+                    {factor.trend === "up" && <TrendingUp className="w-4 h-4 text-green-400" />}
+                    {factor.trend === "down" && <TrendingDown className="w-4 h-4 text-red-400" />}
+                    {factor.trend === "stable" && <CheckCircle className="w-4 h-4 text-blue-400" />}
                   </div>
-                  <div className="text-3xl font-bold mb-1">{factor.score}</div>
+                  <div className="text-2xl font-bold mb-1">{factor.score}</div>
                   <div className="text-sm opacity-90 mb-2">{factor.name}</div>
-                  <Progress value={factor.score} className="h-2 bg-white/20" />
+                  <Progress value={factor.score} className="h-1.5 bg-white/20" />
                   
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <span className="text-sm font-medium">View on Map</span>
-                  </div>
+                  {/* Active indicator */}
+                  {activeLayer === factor.id && (
+                    <div className="absolute inset-0 bg-cyan-400/10 flex items-center justify-center">
+                      <span className="text-xs font-medium text-cyan-400">Active Layer</span>
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -1056,29 +1018,29 @@ export default function AnalysisPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="lg:w-1/2 h-[700px]"
+            className="xl:w-1/2 h-[800px]"
           >
             <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg h-full">
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-white flex items-center space-x-2">
                     <Activity className="w-5 h-5 text-green-400" />
                     <span>Interactive Analysis Map</span>
                   </CardTitle>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="border-cyan-400 text-cyan-400">
+                    <Badge variant="outline" className="border-cyan-400 text-cyan-400 text-xs">
                       2km Radius
                     </Badge>
-                    <Badge variant="outline" className="border-purple-400 text-purple-400">
+                    <Badge variant="outline" className="border-purple-400 text-purple-400 text-xs">
                       {transitStations.length} Transit
                     </Badge>
-                    <Badge variant="outline" className="border-orange-400 text-orange-400">
+                    <Badge variant="outline" className="border-orange-400 text-orange-400 text-xs">
                       {relevantCompetitors.length} Competitors
                     </Badge>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 h-full">
+              <CardContent className="p-4 h-full">
                 <MapView
                   coordinates={coordinates}
                   selectedLocation={selectedLocation}
@@ -1099,14 +1061,14 @@ export default function AnalysisPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="mb-16"
+          className="mb-12"
         >
           <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
             <CardHeader>
               <CardTitle className="text-white flex items-center space-x-2">
                 <BarChart3 className="w-5 h-5 text-cyan-400" />
                 <span>Location Intelligence Overview</span>
-                <Badge variant="outline" className="border-green-400 text-green-400 ml-auto">
+                <Badge variant="outline" className="border-green-400 text-green-400 ml-auto text-xs">
                   Real-time Data
                 </Badge>
               </CardTitle>
@@ -1114,46 +1076,46 @@ export default function AnalysisPage() {
             <CardContent className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
                 <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Store className="w-8 h-8 text-orange-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-2xl">{relevantCompetitors.length}</div>
-                  <div className="text-cyan-300 text-sm">Competitors</div>
+                  <Store className="w-6 h-6 text-orange-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-xl">{relevantCompetitors.length}</div>
+                  <div className="text-cyan-300 text-xs">Competitors</div>
                 </div>
                 <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Train className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-2xl">{transitStations.length}</div>
-                  <div className="text-cyan-300 text-sm">Transit</div>
+                  <Train className="w-6 h-6 text-purple-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-xl">{transitStations.length}</div>
+                  <div className="text-cyan-300 text-xs">Transit</div>
                 </div>
                 <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Users className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-2xl">{realTimeData?.footTraffic || 0}</div>
-                  <div className="text-cyan-300 text-sm">Traffic Score</div>
+                  <Users className="w-6 h-6 text-green-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-xl">{realTimeData?.footTraffic || 0}</div>
+                  <div className="text-cyan-300 text-xs">Traffic Score</div>
                 </div>
                 <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Shield className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-2xl">{realTimeData?.safety || 0}</div>
-                  <div className="text-cyan-300 text-sm">Safety Score</div>
+                  <Shield className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-xl">{realTimeData?.safety || 0}</div>
+                  <div className="text-cyan-300 text-xs">Safety Score</div>
                 </div>
                 <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <TrendingUp className="w-8 h-8 text-orange-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-2xl">{realTimeData?.competition || 0}</div>
-                  <div className="text-cyan-300 text-sm">Competition</div>
+                  <TrendingUp className="w-6 h-6 text-orange-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-xl">{realTimeData?.competition || 0}</div>
+                  <div className="text-cyan-300 text-xs">Competition</div>
                 </div>
                 <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Bus className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-2xl">{realTimeData?.accessibility || 0}</div>
-                  <div className="text-cyan-300 text-sm">Accessibility</div>
+                  <Bus className="w-6 h-6 text-purple-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-xl">{realTimeData?.accessibility || 0}</div>
+                  <div className="text-cyan-300 text-xs">Accessibility</div>
                 </div>
                 <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Activity className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-2xl">{nearbyPlaces.length}</div>
-                  <div className="text-cyan-300 text-sm">Total Places</div>
+                  <Activity className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-xl">{nearbyPlaces.length}</div>
+                  <div className="text-cyan-300 text-xs">Total Places</div>
                 </div>
                 <div className="text-center p-4 bg-white/5 backdrop-blur-xl rounded-lg hover:bg-white/10 transition-colors border border-white/10">
-                  <Star className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
-                  <div className="text-white font-bold text-2xl">
+                  <Star className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
+                  <div className="text-white font-bold text-xl">
                     {Math.round((realTimeData?.footTraffic + realTimeData?.safety + realTimeData?.competition + realTimeData?.accessibility) / 4) || 0}
                   </div>
-                  <div className="text-cyan-300 text-sm">Avg Score</div>
+                  <div className="text-cyan-300 text-xs">Avg Score</div>
                 </div>
               </div>
             </CardContent>
@@ -1165,7 +1127,7 @@ export default function AnalysisPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2 }}
-          className="grid lg:grid-cols-2 gap-8 mb-16"
+          className="grid lg:grid-cols-2 gap-6 mb-12"
         >
           {/* 24-Hour Traffic Pattern */}
           <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
@@ -1179,7 +1141,7 @@ export default function AnalysisPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="relative h-80">
+              <div className="relative h-64">
                 <canvas ref={hourlyChartRef} className="w-full h-full"></canvas>
               </div>
             </CardContent>
@@ -1197,7 +1159,7 @@ export default function AnalysisPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="relative h-80">
+              <div className="relative h-64">
                 <canvas ref={weeklyChartRef} className="w-full h-full"></canvas>
               </div>
             </CardContent>
@@ -1210,17 +1172,17 @@ export default function AnalysisPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.4 }}
-            className="mb-16"
+            className="mb-12"
           >
             <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-white flex items-center space-x-2">
                   <Store className="w-5 h-5 text-orange-400" />
                   <span>{businessCategory} Market Analysis</span>
-                  <Badge variant="outline" className="border-orange-400 text-orange-400">
+                  <Badge variant="outline" className="border-orange-400 text-orange-400 text-xs">
                     {relevantCompetitors.length} Competitors
                   </Badge>
-                  <Badge variant="outline" className={`ml-2 ${
+                  <Badge variant="outline" className={`ml-2 text-xs ${
                     realTimeData?.detailedAnalysis?.competitorAnalysis?.marketSaturation === "Saturated" 
                       ? "border-red-400 text-red-400"
                       : realTimeData?.detailedAnalysis?.competitorAnalysis?.marketSaturation === "Competitive"
@@ -1263,7 +1225,7 @@ export default function AnalysisPage() {
                 
                 {relevantCompetitors.length > 6 && (
                   <div className="mt-6 text-center">
-                    <Badge variant="outline" className="border-orange-400 text-orange-400">
+                    <Badge variant="outline" className="border-orange-400 text-orange-400 text-xs">
                       +{relevantCompetitors.length - 6} more competitors in the area
                     </Badge>
                   </div>
@@ -1278,19 +1240,19 @@ export default function AnalysisPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.8, duration: 0.8 }}
-          className="py-8 mt-16 border-t border-white/20"
+          className="py-6 mt-12 border-t border-white/10"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="rounded-full overflow-hidden w-10 h-10 border-2 border-blue-500/50">
-                <Image src="/logo.png" alt="GeoScope Credit" width={40} height={40} className="object-cover" />
+              <div className="rounded-full overflow-hidden w-8 h-8 border-2 border-blue-500/50">
+                <Image src="/logo.png" alt="GeoScope Credit" width={32} height={32} className="object-cover" />
               </div>
-              <div className="text-blue-300">Coded by Harman • Built in Canada</div>
+              <div className="text-blue-300 text-sm">Coded by Harman • Built in Canada</div>
             </div>
-            <div className="flex items-center space-x-4 text-sm text-slate-400">
+            <div className="flex items-center space-x-4 text-xs text-slate-400">
               <span>Last updated: {new Date().toLocaleTimeString()}</span>
-              <Badge variant="outline" className="border-green-400 text-green-400">
-                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+              <Badge variant="outline" className="border-green-400 text-green-400 text-xs">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2 animate-pulse"></div>
                 Live
               </Badge>
             </div>
