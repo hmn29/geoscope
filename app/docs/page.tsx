@@ -293,8 +293,8 @@ export default function DocsPage() {
                     </h3>
                     <div className="bg-slate-800 rounded-lg p-4 border border-white/10">
                       <code className="text-green-400">
-                        git clone https://github.com/harmanpreet/geoscope-credit.git<br/>
-                        cd geoscope-credit
+                        git clone https://github.com/sicaario/geoscope.git<br/>
+                        cd geoscope
                       </code>
                     </div>
                   </div>
