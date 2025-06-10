@@ -1063,7 +1063,7 @@ export default function AnalysisPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="xl:w-1/2 h-[900px]"
+            className="xl:w-1/2 h-[1100px]"
           >
             <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg h-full">
               <CardHeader className="pb-3">
