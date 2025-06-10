@@ -904,65 +904,110 @@ export default function AnalysisPage() {
 
             {/* Enhanced Circular Score Display */}
             <Card className="bg-white/5 backdrop-blur-xl border border-white/20 relative overflow-hidden">
-              <CardContent className="p-6">
+              <CardContent className="p-8">
                 <div className="text-center">
-                  <div className="flex items-center justify-center space-x-3 mb-4">
+                  <div className="flex items-center justify-center space-x-3 mb-6">
                     <Zap className="w-6 h-6 text-cyan-400" />
-                    <h4 className="text-xl font-bold text-white">GeoScope Score</h4>
+                    <h4 className="text-2xl font-bold text-white">GeoScope Score</h4>
                   </div>
                   
-                  {/* Circular Progress Score */}
-                  <div className="relative w-32 h-32 mx-auto mb-4">
-                    <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
+                  {/* Beautiful Circular Progress Score */}
+                  <div className="relative w-48 h-48 mx-auto mb-6">
+                    <svg className="w-48 h-48 transform -rotate-90" viewBox="0 0 200 200">
+                      {/* Background circle */}
                       <circle
-                        cx="60"
-                        cy="60"
-                        r="50"
+                        cx="100"
+                        cy="100"
+                        r="85"
                         stroke="rgba(255,255,255,0.1)"
-                        strokeWidth="8"
+                        strokeWidth="12"
                         fill="none"
                       />
+                      {/* Progress circle */}
                       <motion.circle
-                        cx="60"
-                        cy="60"
-                        r="50"
+                        cx="100"
+                        cy="100"
+                        r="85"
                         stroke={geoScore >= 75 ? "#10b981" : geoScore >= 60 ? "#f59e0b" : "#ef4444"}
-                        strokeWidth="8"
+                        strokeWidth="12"
                         fill="none"
                         strokeLinecap="round"
-                        strokeDasharray={`${2 * Math.PI * 50}`}
-                        initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
+                        strokeDasharray={`${2 * Math.PI * 85}`}
+                        initial={{ strokeDashoffset: 2 * Math.PI * 85 }}
                         animate={{ 
-                          strokeDashoffset: !scoreAnimated ? 2 * Math.PI * 50 * (1 - geoScore / 100) : 2 * Math.PI * 50 * (1 - geoScore / 100)
+                          strokeDashoffset: !scoreAnimated ? 2 * Math.PI * 85 * (1 - geoScore / 100) : 2 * Math.PI * 85 * (1 - geoScore / 100)
                         }}
-                        transition={{ duration: 2, ease: "easeOut" }}
+                        transition={{ duration: 2.5, ease: "easeOut" }}
                         onAnimationComplete={() => setScoreAnimated(true)}
+                        style={{
+                          filter: `drop-shadow(0 0 8px ${geoScore >= 75 ? "#10b981" : geoScore >= 60 ? "#f59e0b" : "#ef4444"}40)`
+                        }}
                       />
+                      {/* Gradient overlay */}
+                      <defs>
+                        <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor={geoScore >= 75 ? "#10b981" : geoScore >= 60 ? "#f59e0b" : "#ef4444"} />
+                          <stop offset="100%" stopColor={geoScore >= 75 ? "#34d399" : geoScore >= 60 ? "#fbbf24" : "#f87171"} />
+                        </linearGradient>
+                      </defs>
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-                        className={`text-4xl font-bold ${colorFor(geoScore)}`}
-                      >
-                        {geoScore}
-                      </motion.div>
+                      <div className="text-center">
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                          className={`text-6xl font-bold ${colorFor(geoScore)} mb-2`}
+                        >
+                          {geoScore}
+                        </motion.div>
+                        <div className="text-white/60 text-sm">out of 100</div>
+                      </div>
                     </div>
                   </div>
                   
-                  <Badge variant="outline" className={`${colorFor(geoScore)} border-current text-base px-4 py-1 mb-4`}>
+                  <Badge variant="outline" className={`${colorFor(geoScore)} border-current text-lg px-6 py-2 mb-4`}>
                     {labelFor(geoScore)}
                   </Badge>
                   
-                  {/* Score Progress Bar */}
-                  <div className="mt-4">
-                    <div className="flex justify-between text-xs text-gray-300 mb-2">
-                      <span>Poor</span>
-                      <span>Good</span>
-                      <span>Excellent</span>
+                  {/* Enhanced Score Slider */}
+                  <div className="mt-6">
+                    <div className="flex justify-between text-sm text-gray-300 mb-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <span>Poor</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <span>Good</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span>Excellent</span>
+                      </div>
                     </div>
-                    <Progress value={geoScore} className="h-2 bg-white/10" />
+                    <div className="relative h-4 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full overflow-hidden">
+                      <motion.div
+                        className="absolute top-0 left-0 h-full bg-white/20 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${geoScore}%` }}
+                        transition={{ duration: 2, ease: "easeOut" }}
+                      />
+                      <motion.div
+                        className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-gray-800"
+                        initial={{ left: "0%" }}
+                        animate={{ left: `${geoScore}%` }}
+                        transition={{ duration: 2, ease: "easeOut" }}
+                        style={{ marginLeft: "-12px" }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 mt-2">
+                      <span>0</span>
+                      <span>25</span>
+                      <span>50</span>
+                      <span>75</span>
+                      <span>100</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -1018,7 +1063,7 @@ export default function AnalysisPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="xl:w-1/2 h-[800px]"
+            className="xl:w-1/2 h-[900px]"
           >
             <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg h-full">
               <CardHeader className="pb-3">
