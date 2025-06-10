@@ -1085,7 +1085,7 @@ export default function AnalysisPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 h-[820px]">
+              <CardContent className="p-4 h-[800px]">
                 <MapView
                   coordinates={coordinates}
                   selectedLocation={selectedLocation}
