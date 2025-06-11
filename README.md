@@ -21,10 +21,6 @@ GeoScope Credit is a sophisticated location intelligence platform that analyzes 
 - **Responsive Design** - Works seamlessly across all devices
 - **Edge Performance** - Sub-second response times with global CDN
 
-
-![GeoScope Credit – Stack Overview](https://ik.imagekit.io/yh66k1zse/ChatGPT%20Image%20Jun%209%202025%20Project%20Overview.jpeg?updatedAt=1749476251841)
-![GeoScope Credit – Request Lifecycle](https://ik.imagekit.io/yh66k1zse/PNG%20image%206.png?updatedAt=1749476263422)
-
 ---
 
 ## Scoring Algorithm
