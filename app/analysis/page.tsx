@@ -1095,7 +1095,7 @@ export default function AnalysisPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="lg:w-1/2 mt-80 h-[850px]"
+            className="lg:w-1/2 mt-96 h-[850px]"
           >
             <Card className="bg-white/5 backdrop-blur-xl border border-white/20 shadow-lg h-full">
               <CardHeader>
